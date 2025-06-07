@@ -72,9 +72,10 @@ const explainAnswerFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    if (!output) {
-        throw new Error('A IA não conseguiu gerar uma explicação detalhada.');
+    if (!output || !output.briefContext || !output.coreExplanation || !output.bibleVerseReference || !output.bibleVerseText) {
+        throw new Error('A IA não conseguiu gerar uma explicação detalhada com todos os campos necessários.');
     }
     return output;
   }
 );
+

@@ -24,5 +24,5 @@ export const sampleQuizQuestions: QuizQuestionType[] = [
   },
 ];
 
-export const quizTopics = ["Todos os Tópicos", "Antigo Testamento", "Novo Testamento", "Profetas", "Patriarcas", "Reis de Israel", "Milagres de Jesus", "Apóstolos"];
+// quizTopics foi removido pois o campo de tópico agora é um input de texto.
 export const quizDifficulties: Array<"todos" | "fácil" | "médio" | "difícil"> = ["todos", "fácil", "médio", "difícil"];

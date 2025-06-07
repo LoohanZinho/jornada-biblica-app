@@ -7,13 +7,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { quizTopics, quizDifficulties } from '@/lib/quizData'; 
+import { quizDifficulties } from '@/lib/quizData'; 
 import { Wand2 } from 'lucide-react';
 
 const quizSettingsSchema = z.object({
-  topic: z.string().min(1, "Por favor, selecione um tópico."),
+  topic: z.string().min(1, "Por favor, digite ou selecione um tópico.").max(100, "O tópico deve ter no máximo 100 caracteres."),
   difficulty: z.enum(["todos", "fácil", "médio", "difícil"]),
   numberOfQuestions: z.number().min(1).max(20), 
 });
@@ -23,10 +24,10 @@ interface QuizSetupProps {
 }
 
 export function QuizSetup({ onStartQuiz }: QuizSetupProps) {
-  const { control, handleSubmit, formState: { errors } } = useForm<QuizSettings>({
+  const { control, handleSubmit, register, formState: { errors } } = useForm<QuizSettings>({
     resolver: zodResolver(quizSettingsSchema),
     defaultValues: {
-      topic: quizTopics[0], 
+      topic: "Antigo Testamento", 
       difficulty: 'todos',
       numberOfQuestions: 5,
     },
@@ -49,23 +50,11 @@ export function QuizSetup({ onStartQuiz }: QuizSetupProps) {
         <CardContent className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="topic" className="font-semibold">Tópico</Label>
-            <Controller
-              name="topic"
-              control={control}
-              render={({ field }) => (
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <SelectTrigger id="topic" aria-label="Selecionar tópico">
-                    <SelectValue placeholder="Selecione um tópico" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {quizTopics.map((topic) => (
-                      <SelectItem key={topic} value={topic}>
-                        {topic}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+            <Input
+              id="topic"
+              aria-label="Digite o tópico do quiz"
+              placeholder="Ex: Reis de Israel, Profetas, Milagres"
+              {...register("topic")}
             />
             {errors.topic && <p className="text-sm text-destructive">{errors.topic.message}</p>}
           </div>
@@ -125,5 +114,3 @@ export function QuizSetup({ onStartQuiz }: QuizSetupProps) {
     </Card>
   );
 }
-
-    
