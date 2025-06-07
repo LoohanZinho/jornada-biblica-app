@@ -20,7 +20,7 @@ const ExplainAnswerInputSchema = z.object({
 export type ExplainAnswerInput = z.infer<typeof ExplainAnswerInputSchema>;
 
 const ExplainAnswerOutputSchema = z.object({
-  explanation: z.string().describe('Uma explicação concisa e envolvente da resposta correta, destacando um fato interessante ou curiosidade, em português.'),
+  explanation: z.string().describe('Uma explicação extremamente concisa e envolvente da resposta correta (idealmente uma frase curta), destacando um fato interessante ou curiosidade, em português, para garantir rapidez.'),
 });
 export type ExplainAnswerOutput = z.infer<typeof ExplainAnswerOutputSchema>;
 
@@ -32,15 +32,15 @@ const prompt = ai.definePrompt({
   name: 'explainAnswerPromptPortuguese',
   input: {schema: ExplainAnswerInputSchema},
   output: {schema: ExplainAnswerOutputSchema},
-  prompt: `Você é um especialista em história e teologia bíblica, capaz de explicar conceitos de forma clara e envolvente.
-Um usuário respondeu a uma pergunta do quiz. Forneça uma explicação concisa e interessante em português sobre a resposta correta.
-Destaque o ponto principal ou uma curiosidade relevante de forma breve. Evite textos longos.
+  prompt: `Você é um especialista em Bíblia, capaz de fornecer fatos interessantes de forma MUITO RÁPIDA e CONCISA.
+Um usuário respondeu a uma pergunta do quiz. Forneça uma explicação EXTREMAMENTE CURTA e ENVOLVENTE em português sobre a resposta correta.
+O objetivo é ser rápido. Idealmente, uma única frase destacando um fato curioso ou o ponto principal. Evite qualquer texto longo. FOCO NA BREVIDADE.
 
 Pergunta: {{{question}}}
 Resposta do Usuário: {{{answer}}}
 Resposta Correta: {{{correctAnswer}}}
 
-Explicação Envolvente e Curta: `,
+Explicação (muito curta e direta): `,
 });
 
 const explainAnswerFlow = ai.defineFlow(
@@ -54,3 +54,4 @@ const explainAnswerFlow = ai.defineFlow(
     return output!;
   }
 );
+
