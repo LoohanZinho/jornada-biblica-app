@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { AppLogo } from '@/components/icons/AppLogo';
 import { Button } from '@/components/ui/button';
 import { Menu, Home, ListChecks, BookOpenText, Map } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 const navItems = [
   { href: '/', label: 'Início', icon: <Home className="h-5 w-5" /> },
@@ -41,10 +41,14 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[360px] bg-background p-6">
-               <Link href="/" className="mb-8 flex items-center gap-2">
-                <AppLogo />
-                <span className="font-headline text-xl font-bold text-primary">Jornada Bíblica</span>
-              </Link>
+              <SheetHeader className="mb-6 text-left">
+                <SheetTitle asChild>
+                  <Link href="/" className="flex items-center gap-2">
+                    <AppLogo />
+                    <span className="font-headline text-xl font-bold text-primary">Jornada Bíblica</span>
+                  </Link>
+                </SheetTitle>
+              </SheetHeader>
               <nav className="flex flex-col space-y-1">
                 {navItems.map((item) => (
                   <SheetClose asChild key={item.href}>
@@ -65,5 +69,3 @@ export function Header() {
     </header>
   );
 }
-
-    
