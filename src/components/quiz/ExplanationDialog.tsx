@@ -61,17 +61,17 @@ export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, c
       <DialogContent className="sm:max-w-lg bg-card text-card-foreground shadow-xl rounded-lg">
         <DialogHeader className="text-center">
           <Lightbulb className="h-10 w-10 text-primary mx-auto mb-2" />
-          <DialogTitle className="text-2xl font-headline">Explicação da Resposta</DialogTitle>
+          <DialogTitle className="text-2xl font-headline">Saiba Mais!</DialogTitle>
           <DialogDescription className="text-md">
-            Aprofunde-se no contexto da pergunta.
+            Descubra um fato interessante sobre a pergunta.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="my-4 min-h-[200px]">
+        <div className="my-4 min-h-[150px]"> {/* Reduced min-h for potentially shorter content */}
           {isLoading && <LoadingIndicator text="Gerando explicação..." />}
           {error && <p className="text-destructive text-center">{error}</p>}
           {explanation && !isLoading && (
-            <ScrollArea className="h-[300px] rounded-md border p-4 bg-background shadow-inner">
+            <ScrollArea className="h-[250px] rounded-md border p-4 bg-background shadow-inner"> {/* Adjusted height if needed */}
               <p className="text-sm whitespace-pre-wrap font-body leading-relaxed">{explanation}</p>
             </ScrollArea>
           )}
@@ -86,5 +86,3 @@ export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, c
     </Dialog>
   );
 }
-
-    

@@ -20,7 +20,7 @@ const ExplainAnswerInputSchema = z.object({
 export type ExplainAnswerInput = z.infer<typeof ExplainAnswerInputSchema>;
 
 const ExplainAnswerOutputSchema = z.object({
-  explanation: z.string().describe('Uma explicação detalhada da resposta correta, incluindo contexto histórico e fatos relacionados, em português.'),
+  explanation: z.string().describe('Uma explicação concisa e envolvente da resposta correta, destacando um fato interessante ou curiosidade, em português.'),
 });
 export type ExplainAnswerOutput = z.infer<typeof ExplainAnswerOutputSchema>;
 
@@ -32,13 +32,15 @@ const prompt = ai.definePrompt({
   name: 'explainAnswerPromptPortuguese',
   input: {schema: ExplainAnswerInputSchema},
   output: {schema: ExplainAnswerOutputSchema},
-  prompt: `Você é um especialista em história e teologia bíblica. Um usuário acabou de responder a uma pergunta do quiz. Forneça uma explicação detalhada em português da resposta correta, incluindo contexto histórico, fatos relacionados e curiosidades.
+  prompt: `Você é um especialista em história e teologia bíblica, capaz de explicar conceitos de forma clara e envolvente.
+Um usuário respondeu a uma pergunta do quiz. Forneça uma explicação concisa e interessante em português sobre a resposta correta.
+Destaque o ponto principal ou uma curiosidade relevante de forma breve. Evite textos longos.
 
 Pergunta: {{{question}}}
 Resposta do Usuário: {{{answer}}}
 Resposta Correta: {{{correctAnswer}}}
 
-Explicação Detalhada: `,
+Explicação Envolvente e Curta: `,
 });
 
 const explainAnswerFlow = ai.defineFlow(
@@ -52,5 +54,3 @@ const explainAnswerFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    

@@ -115,15 +115,15 @@ export default function QuizPage() {
       setScore(prev => prev + 1);
        toast({
         title: "Correto!",
-        description: "Muito bem!",
+        description: "Muito bem! Continue assim!",
         variant: "default",
         duration: 2000,
       });
     } else {
         toast({
-        title: "Incorreto",
-        description: `A resposta correta era: ${questions[currentQuestionIndex].correctAnswer}`,
-        variant: "destructive",
+        title: "Ops!",
+        description: `A resposta correta é: ${questions[currentQuestionIndex].correctAnswer}. Continue aprendendo!`,
+        variant: "default", 
         duration: 3000,
       });
     }
@@ -232,5 +232,3 @@ export default function QuizPage() {
     </div>
   );
 }
-
-    

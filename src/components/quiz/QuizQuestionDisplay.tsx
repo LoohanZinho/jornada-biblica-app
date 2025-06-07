@@ -69,7 +69,6 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
           <CardTitle className="text-2xl md:text-3xl font-headline">{`Pergunta ${questionNumber}/${totalQuestions}`}</CardTitle>
           <span className="text-sm text-muted-foreground font-medium capitalize">{questionData.topic} - {questionData.difficulty}</span>
         </div>
-        <CardDescription className="text-lg md:text-xl font-body min-h-[3em]">{questionData.question}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="mb-6 aspect-video w-full relative overflow-hidden rounded-lg shadow-md bg-muted">
@@ -78,16 +77,18 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
              <div className="w-full h-full flex flex-col items-center justify-center bg-secondary">
                 <AlertCircle className="w-16 h-16 text-destructive mb-2" />
                 <p className="text-destructive-foreground">Não foi possível carregar a imagem.</p>
-                <Image src={`https://placehold.co/600x400.png?text=Erro`} alt="Erro ao carregar imagem" layout="fill" objectFit="cover" data-ai-hint="error illustration" />
+                <Image src="https://placehold.co/600x400.png" alt="Erro ao carregar imagem" layout="fill" objectFit="cover" data-ai-hint="error illustration" />
             </div>
           )}
           {!imageLoading && !imageError && imageUrl && (
             <Image src={imageUrl} alt={`Ilustração para: ${questionData.question}`} layout="fill" objectFit="cover" data-ai-hint={questionData.imageHint || "bible scene"} />
           )}
           {!imageLoading && !imageError && !imageUrl && (
-             <Image src={`https://placehold.co/600x400.png?text=${questionData.imageHint || "Ilustração"}`} alt="Imagem de placeholder" layout="fill" objectFit="cover" data-ai-hint={questionData.imageHint || "bible scene"} />
+             <Image src="https://placehold.co/600x400.png" alt="Imagem de placeholder para a pergunta" layout="fill" objectFit="cover" data-ai-hint={questionData.imageHint || "bible scene"} />
           )}
         </div>
+        
+        <CardDescription className="text-lg md:text-xl font-body min-h-[3em] mb-6 text-center">{questionData.question}</CardDescription>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {questionData.options.map((option, index) => (
@@ -113,5 +114,3 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
     </Card>
   );
 }
-
-    
