@@ -26,8 +26,8 @@ export type ExplainAnswerInput = z.infer<typeof ExplainAnswerInputSchema>;
 const ExplainAnswerOutputSchema = z.object({
   briefContext: z.string().describe('Um contexto histórico ou narrativo um pouco mais detalhado sobre a questão, em português. Mantenha informativo e envolvente (2-4 frases).'),
   coreExplanation: z.string().describe('A explicação central da resposta correta, de forma clara e bem concisa, em português (1-2 frases no máximo).'),
-  bibleVerseReference: z.string().describe('A referência bíblica relevante para a explicação (ex: Gênesis 1:1), em português.'),
-  bibleVerseText: z.string().describe('O texto do versículo bíblico correspondente à referência, em português.'),
+  bibleVerseReference: z.string().describe('A referência bíblica relevante para a explicação (ex: Gênesis 1:1 ou Gênesis 1:1-3), em português. Escolha a referência mais precisa e relevante para a explicação.'),
+  bibleVerseText: z.string().describe('O texto do(s) versículo(s) bíblico(s) correspondente(s) à referência, em português. Se for um trecho, inclua o texto de todos os versículos referenciados, de forma concisa.'),
 });
 // Exporta o tipo inferido para uso externo, alinhado com o tipo em @/types
 export type ExplainAnswerOutput = z.infer<typeof ExplainAnswerOutputSchema>;
@@ -56,10 +56,11 @@ Contexto Adicional Fornecido: {{{explanationContext}}}
 Por favor, forneça as seguintes informações em português:
 1.  'briefContext': Forneça um contexto histórico ou narrativo um pouco mais detalhado e interessante sobre a questão. Este deve ser o foco principal, um pouco mais longo que a explicação (idealmente 2-4 frases).
 2.  'coreExplanation': Uma explicação central BEM CURTA e direta da resposta correta (idealmente 1-2 frases curtas).
-3.  'bibleVerseReference': A referência de UM versículo bíblico relevante que fundamente ou ilustre a explicação (formato: Livro Capítulo:Versículo, ex: João 3:16).
-4.  'bibleVerseText': O texto completo desse versículo bíblico.
+3.  'bibleVerseReference': A referência bíblica MAIS RELEVANTE E PRECISA para a explicação. Pode ser um único versículo (ex: João 3:16) ou um pequeno trecho de versículos consecutivos (ex: Gênesis 1:1-3 ou 1 Samuel 17:45-47) se isso for essencial para entender o contexto da história relacionada à pergunta. Priorize a relevância e a concisão.
+4.  'bibleVerseText': O texto completo do(s) versículo(s) bíblico(s) correspondente(s) à referência fornecida. Certifique-se de que o texto corresponda exatamente à referência. Se for um trecho, inclua todo o texto do trecho, mas mantenha-o conciso.
 
 Seja direto e evite introduções desnecessárias. O foco é fornecer valor rapidamente, com um contexto mais rico.
+Certifique-se de que a passagem bíblica escolhida seja diretamente relevante para a pergunta e a resposta correta.
 Formate a saída como um objeto JSON que corresponda ao schema de saída especificado.
 `,
 });
