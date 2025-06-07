@@ -3,7 +3,7 @@
 
 /**
  * @fileOverview Explica a resposta para uma pergunta de quiz bíblico, fornecendo contexto histórico,
- * uma explicação central e um versículo bíblico relevante, em português.
+ * uma explicação central e um versículo bíblico relevante, em português, preferencialmente da Tradução do Novo Mundo.
  *
  * - explainAnswer - Uma função que lida com o processo de explicação.
  * - ExplainAnswerInput - O tipo de entrada para a função explainAnswer.
@@ -27,7 +27,7 @@ const ExplainAnswerOutputSchema = z.object({
   briefContext: z.string().describe('Um contexto histórico ou narrativo um pouco mais detalhado sobre a questão, em português. Mantenha informativo e envolvente (2-4 frases).'),
   coreExplanation: z.string().describe('A explicação central da resposta correta, de forma clara e bem concisa, em português (1-2 frases no máximo).'),
   bibleVerseReference: z.string().describe('A referência bíblica relevante para a explicação (ex: Gênesis 1:1 ou Gênesis 1:1-3), em português. Escolha a referência mais precisa e relevante para a explicação.'),
-  bibleVerseText: z.string().describe('O texto do(s) versículo(s) bíblico(s) correspondente(s) à referência, em português. Se for um trecho, inclua o texto de todos os versículos referenciados, de forma concisa.'),
+  bibleVerseText: z.string().describe('O texto do(s) versículo(s) bíblico(s) correspondente(s) à referência, em português. Forneça o texto da "Tradução do Novo Mundo das Escrituras Sagradas" se possível. Se for um trecho, inclua o texto de todos os versículos referenciados, de forma concisa.'),
 });
 // Exporta o tipo inferido para uso externo, alinhado com o tipo em @/types
 export type ExplainAnswerOutput = z.infer<typeof ExplainAnswerOutputSchema>;
@@ -40,7 +40,7 @@ export async function explainAnswer(input: ExplainAnswerInput): Promise<ExplainA
 }
 
 const prompt = ai.definePrompt({
-  name: 'explainAnswerDetailsPromptPortuguese',
+  name: 'explainAnswerDetailsPromptPortugueseTNM',
   input: {schema: ExplainAnswerInputSchema},
   output: {schema: ExplainAnswerOutputSchema},
   prompt: `Você é um teólogo e historiador bíblico experiente, fornecendo explicações claras e envolventes.
@@ -57,7 +57,7 @@ Por favor, forneça as seguintes informações em português:
 1.  'briefContext': Forneça um contexto histórico ou narrativo um pouco mais detalhado e interessante sobre a questão. Este deve ser o foco principal, um pouco mais longo que a explicação (idealmente 2-4 frases).
 2.  'coreExplanation': Uma explicação central BEM CURTA e direta da resposta correta (idealmente 1-2 frases curtas).
 3.  'bibleVerseReference': A referência bíblica MAIS RELEVANTE E PRECISA para a explicação. Pode ser um único versículo (ex: João 3:16) ou um pequeno trecho de versículos consecutivos (ex: Gênesis 1:1-3 ou 1 Samuel 17:45-47) se isso for essencial para entender o contexto da história relacionada à pergunta. Priorize a relevância e a concisão.
-4.  'bibleVerseText': O texto completo do(s) versículo(s) bíblico(s) correspondente(s) à referência fornecida. Certifique-se de que o texto corresponda exatamente à referência. Se for um trecho, inclua todo o texto do trecho, mas mantenha-o conciso.
+4.  'bibleVerseText': O texto completo do(s) versículo(s) bíblico(s) correspondente(s) à referência fornecida. MUITO IMPORTANTE: Use o texto da "Tradução do Novo Mundo das Escrituras Sagradas". Certifique-se de que o texto corresponda exatamente à referência e à tradução solicitada. Se for um trecho, inclua todo o texto do trecho, mas mantenha-o conciso.
 
 Seja direto e evite introduções desnecessárias. O foco é fornecer valor rapidamente, com um contexto mais rico.
 Certifique-se de que a passagem bíblica escolhida seja diretamente relevante para a pergunta e a resposta correta.
@@ -67,7 +67,7 @@ Formate a saída como um objeto JSON que corresponda ao schema de saída especif
 
 const explainAnswerFlow = ai.defineFlow(
   {
-    name: 'explainAnswerDetailsFlowPortuguese',
+    name: 'explainAnswerDetailsFlowPortugueseTNM',
     inputSchema: ExplainAnswerInputSchema,
     outputSchema: ExplainAnswerOutputSchema,
   },
