@@ -11,7 +11,6 @@ export const sampleQuizQuestions: QuizQuestionType[] = [
     difficulty: "fácil",
     explanationContext: "A história da Arca de Noé é encontrada no Livro de Gênesis, capítulos 6-9. Deus instruiu Noé, um homem justo, a construir uma grande embarcação (arca) para preservar a vida durante um dilúvio mundial destinado a limpar a terra da maldade.",
     imageHint: "ark flood",
-    hintText: "Este homem justo foi escolhido para preservar a vida animal e humana de um evento aquático catastrófico."
   },
   {
     id: 'sample-2',
@@ -22,7 +21,6 @@ export const sampleQuizQuestions: QuizQuestionType[] = [
     difficulty: "fácil",
     explanationContext: "Moisés, uma figura chave no Judaísmo, Cristianismo e Islamismo, liderou os israelitas para fora da escravidão no Egito. A divisão do Mar Vermelho, descrita no Livro do Êxodo, permitiu que eles escapassem do exército egípcio que os perseguia.",
     imageHint: "sea parting",
-    hintText: "Ele liderou o povo de Israel para fora do Egito e usou seu cajado em um momento crucial de fuga."
   },
 ];
 

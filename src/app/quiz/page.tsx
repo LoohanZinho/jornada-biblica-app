@@ -36,7 +36,7 @@ export default function QuizPage() {
     setCurrentQuestionIndex(0);
     setScore(0);
     setQuizResults([]);
-    setQuestions([]); // Limpa perguntas anteriores
+    setQuestions([]); 
 
     try {
       const aiInput: GenerateQuizQuestionsInput = {
@@ -48,41 +48,32 @@ export default function QuizPage() {
       
       let generatedQuestions = response.questions as QuizQuestionType[];
 
-      toast({ // DEBUG: Para verificar quantas perguntas a IA está gerando
-        title: "IA Debug - Geração",
-        description: `A IA retornou ${generatedQuestions?.length || 0} perguntas. Solicitado: ${selectedSettings.numberOfQuestions}.`,
-        variant: "default",
-        duration: 7000,
-      });
-
       if (!generatedQuestions || generatedQuestions.length === 0) {
         toast({
             title: "IA não Gerou Perguntas",
             description: "A IA não conseguiu gerar perguntas. Usando perguntas de exemplo.",
             variant: "destructive",
         });
-        generatedQuestions = []; // Força o fallback
+        generatedQuestions = sampleQuizQuestions.filter(q => 
+            (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic) &&
+            (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty)
+        ).slice(0, selectedSettings.numberOfQuestions);
       }
       
-      let finalQuestions = generatedQuestions.filter(q => q.question && q.options && q.correctAnswer); // Filtra perguntas malformadas
+      let finalQuestions = generatedQuestions.filter(q => q.question && q.options && q.correctAnswer); 
 
       if (finalQuestions.length < selectedSettings.numberOfQuestions) {
-        toast({
-            title: "Perguntas Insuficientes",
-            description: `A IA gerou ${finalQuestions.length} perguntas válidas. Completando com exemplos, se necessário.`,
-            variant: "default",
-        });
         const needed = selectedSettings.numberOfQuestions - finalQuestions.length;
         if (needed > 0) {
             const fallbackSample = sampleQuizQuestions.filter(q => 
                 (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic) &&
-                (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty)
+                (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty) &&
+                !finalQuestions.some(fq => fq.id === q.id) 
             ).slice(0, needed);
             finalQuestions = [...finalQuestions, ...fallbackSample];
         }
       }
       
-      // Garante que não exceda o número solicitado
       finalQuestions = finalQuestions.slice(0, selectedSettings.numberOfQuestions);
 
       if (finalQuestions.length === 0) {
@@ -92,7 +83,7 @@ export default function QuizPage() {
             variant: "destructive",
         });
         setIsLoadingQuestions(false);
-        setQuizStarted(false); // Volta para a tela de setup
+        setQuizStarted(false); 
         return;
       }
       
@@ -119,7 +110,7 @@ export default function QuizPage() {
               variant: "destructive",
           });
           setIsLoadingQuestions(false);
-          setQuizStarted(false); // Volta para a tela de setup
+          setQuizStarted(false); 
           return;
       }
       setQuestions(fallbackQuestions);
@@ -245,4 +236,3 @@ export default function QuizPage() {
     </div>
   );
 }
-

@@ -8,9 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { generateImageFromQuestion } from '@/ai/flows/generate-image-from-question'; 
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { AlertCircle, CheckCircle2, XCircle, Lightbulb } from 'lucide-react';
+import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface QuizQuestionDisplayProps {
   questionData: QuizQuestionType; 
@@ -27,7 +26,7 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
   const [imageError, setImageError] = useState(false);
   const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
   
-  const currentQuestionIdRef = useRef<string | null>(null); 
+  const currentQuestionKeyRef = useRef<string | null>(null); 
   const isFetchingImageRef = useRef(false); 
 
   useEffect(() => {
@@ -37,15 +36,15 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
         setImageUrl(null);
         setImageLoading(false);
         setImageError(true);
-        currentQuestionIdRef.current = null;
+        currentQuestionKeyRef.current = null;
         isFetchingImageRef.current = false;
         return;
     }
 
     const uniqueQuestionKey = `${questionData.id}||${questionData.question}`;
 
-    if (currentQuestionIdRef.current !== uniqueQuestionKey) {
-        currentQuestionIdRef.current = uniqueQuestionKey;
+    if (currentQuestionKeyRef.current !== uniqueQuestionKey) {
+        currentQuestionKeyRef.current = uniqueQuestionKey;
         setSelectedAnswer(null);
         setIsAnswered(false);
         setImageUrl(null);
@@ -54,35 +53,30 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
         isFetchingImageRef.current = false; 
     }
 
-    if (currentQuestionIdRef.current === uniqueQuestionKey && (!imageUrl || imageError) && !isFetchingImageRef.current) {
+    if (currentQuestionKeyRef.current === uniqueQuestionKey && !imageUrl && !isFetchingImageRef.current && !imageError) {
         isFetchingImageRef.current = true;
         setImageLoading(true); 
         setImageError(false); 
 
         generateImageFromQuestion({ questionText: questionData.question })
             .then(response => {
-                if (currentQuestionIdRef.current === uniqueQuestionKey) { 
+                if (currentQuestionKeyRef.current === uniqueQuestionKey) { 
                     setImageUrl(response.imageUrl);
                 }
             })
             .catch(err => {
                 console.error("Erro ao gerar imagem:", err);
-                if (currentQuestionIdRef.current === uniqueQuestionKey) { 
+                if (currentQuestionKeyRef.current === uniqueQuestionKey) { 
                     setImageError(true);
                 }
             })
             .finally(() => {
-                 if (currentQuestionIdRef.current === uniqueQuestionKey) { 
+                 if (currentQuestionKeyRef.current === uniqueQuestionKey) { 
                     setImageLoading(false);
-                    isFetchingImageRef.current = false; 
                  }
+                 isFetchingImageRef.current = false; 
             });
-    } else if (currentQuestionIdRef.current === uniqueQuestionKey && imageUrl && !imageLoading) {
-        // If image is already loaded for the current question, no need to do anything.
-    } else if (currentQuestionIdRef.current === uniqueQuestionKey && !imageUrl && imageError && !imageLoading) {
-        // If there was an error and image is not loading, no need to re-fetch unless question changes.
     }
-
   }, [questionData, imageUrl, imageError]); 
 
   const handleOptionClick = (option: string) => {
@@ -92,10 +86,6 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
     const isCorrect = option === questionData.correctAnswer;
     if (isCorrect) {
       setShowCorrectAnimation(true);
-      setTimeout(() => {
-        // A animação é controlada por CSS, mas podemos resetar o estado se necessário após a duração
-        // setShowCorrectAnimation(false); // Comentado para deixar a animação rodar até a próxima pergunta
-      }, 800); 
     }
     onAnswer(option, isCorrect);
   };
@@ -136,25 +126,9 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
           )}
         </div>
         
-        <div className="flex items-center justify-between text-left mb-6">
-            <CardDescription className="text-lg md:text-xl font-body min-h-[3em] flex-grow mr-2">
-                {questionData.question}
-            </CardDescription>
-            {questionData.hintText && !isAnswered && (
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant="ghost" size="icon" className="shrink-0 text-primary hover:bg-primary/10 p-2">
-                            <Lightbulb className="h-5 w-5" />
-                            <span className="sr-only">Mostrar dica</span>
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto max-w-xs sm:max-w-sm text-sm p-3 bg-card shadow-lg rounded-md border">
-                        <p className="font-semibold text-primary mb-1">Dica:</p>
-                        {questionData.hintText}
-                    </PopoverContent>
-                </Popover>
-            )}
-        </div>
+        <CardDescription className="text-lg md:text-xl font-body min-h-[3em] text-left mb-6">
+            {questionData.question}
+        </CardDescription>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {questionData.options.map((option, index) => (

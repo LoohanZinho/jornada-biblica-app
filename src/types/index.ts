@@ -8,7 +8,6 @@ export interface QuizQuestionType {
   difficulty: "fácil" | "médio" | "difícil"; 
   explanationContext?: string; 
   imageHint?: string; 
-  hintText?: string; // Nova propriedade para a dica
 }
 
 export interface DailyVerse {
