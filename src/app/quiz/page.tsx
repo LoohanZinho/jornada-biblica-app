@@ -24,7 +24,7 @@ export default function QuizPage() {
   const [quizResults, setQuizResults] = useState<QuizResult[]>([]);
   
   const [showExplanation, setShowExplanation] = useState(false);
-  const [explanationData, setExplanationData] = useState<{ question: string; userAnswer: string; correctAnswer: string } | null>(null);
+  const [explanationData, setExplanationData] = useState<{ question: string; userAnswer: string; correctAnswer: string; explanationContext?: string; } | null>(null);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
 
   const router = useRouter();
@@ -123,29 +123,23 @@ export default function QuizPage() {
   const handleAnswer = (selectedAnswer: string, isCorrect: boolean) => {
     if (isCorrect) {
       setScore(prev => prev + 1);
-    } else {
-        toast({
-        title: "Ops!",
-        description: `A resposta correta é: ${questions[currentQuestionIndex].correctAnswer}. Continue aprendendo!`,
-        variant: "default", 
-        duration: 3000,
-      });
     }
+    // Removido o toast de resposta incorreta, o feedback será dado no ExplanationDialog
 
-    const currentQuestionText = questions[currentQuestionIndex].question;
-    const correctAnswerText = questions[currentQuestionIndex].correctAnswer;
+    const currentQ = questions[currentQuestionIndex];
 
     setQuizResults(prev => [...prev, {
-      question: currentQuestionText,
+      question: currentQ.question,
       selectedAnswer,
-      correctAnswer: correctAnswerText,
+      correctAnswer: currentQ.correctAnswer,
       isCorrect
     }]);
     
     setExplanationData({
-      question: currentQuestionText,
+      question: currentQ.question,
       userAnswer: selectedAnswer,
-      correctAnswer: correctAnswerText,
+      correctAnswer: currentQ.correctAnswer,
+      explanationContext: currentQ.explanationContext,
     });
     setShowExplanation(true); 
   };
@@ -222,6 +216,7 @@ export default function QuizPage() {
           quizQuestion={explanationData.question}
           userAnswer={explanationData.userAnswer}
           correctAnswer={explanationData.correctAnswer}
+          explanationContext={explanationData.explanationContext}
         />
       )}
       

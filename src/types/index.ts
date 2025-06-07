@@ -29,3 +29,10 @@ export interface QuizResult {
   correctAnswer: string; 
   isCorrect: boolean;
 }
+
+export interface ExplainAnswerOutput {
+  briefContext: string;
+  coreExplanation: string;
+  bibleVerseReference: string;
+  bibleVerseText: string;
+}
