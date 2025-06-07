@@ -26,7 +26,8 @@ export async function generateImageFromQuestion(input: GenerateImageFromQuestion
 }
 
 const imageGenerationPromptForModel = (questionText: string) => {
-  return `Gere uma imagem que represente visualmente o contexto da seguinte pergunta bíblica: "${questionText}". A imagem deve ser adequada para um quiz bíblico. Estilo ilustrativo ou pictórico. A imagem deve ser puramente ilustrativa, sem nenhum texto sobreposto ou incorporado nela. Foco total na ilustração visual.`;
+  // Instrução mais enfática para não gerar texto na imagem
+  return `Gere uma imagem que represente visualmente o contexto da pergunta bíblica: "${questionText}". A imagem deve ser artística e puramente ilustrativa. É CRUCIAL que a imagem NÃO contenha NENHUM texto, NENHUMA letra, NENHUM caracter escrito. O foco é 100% na ilustração visual. Estilo: ilustração digital ou pintura. Não inclua bordas ou molduras que pareçam conter texto.`;
 }
 
 const generateImageFromQuestionFlow = ai.defineFlow(
@@ -50,3 +51,4 @@ const generateImageFromQuestionFlow = ai.defineFlow(
     return {imageUrl: media.url};
   }
 );
+

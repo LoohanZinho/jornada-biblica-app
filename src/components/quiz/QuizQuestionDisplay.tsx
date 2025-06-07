@@ -32,7 +32,7 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
     setImageLoading(true);
     setImageError(false);
 
-    if (questionData.question) {
+    if (questionData.id && questionData.question) { // Garante que temos dados válidos
       generateImageFromQuestion({ questionText: questionData.question })
         .then(response => {
           setImageUrl(response.imageUrl);
@@ -44,8 +44,11 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
         .finally(() => {
           setImageLoading(false);
         });
+    } else {
+        setImageLoading(false);
+        setImageError(true); // Se não houver dados da pergunta, considera um erro de imagem.
     }
-  }, [questionData]);
+  }, [questionData.id, questionData.question]); // Depende do ID e do texto da pergunta
 
   const handleOptionClick = (option: string) => {
     if (isAnswered) return;
@@ -83,6 +86,7 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
           {!imageLoading && !imageError && imageUrl && (
             <Image src={imageUrl} alt={`Ilustração para: ${questionData.question}`} layout="fill" objectFit="cover" data-ai-hint={questionData.imageHint || "bible scene"} />
           )}
+          {/* Fallback se imageUrl for null mas não houve erro nem está carregando (pode acontecer se a API não retornar URL) */}
           {!imageLoading && !imageError && !imageUrl && (
              <Image src="https://placehold.co/600x400.png" alt="Imagem de placeholder para a pergunta" layout="fill" objectFit="cover" data-ai-hint={questionData.imageHint || "bible scene"} />
           )}
@@ -114,3 +118,4 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
     </Card>
   );
 }
+
