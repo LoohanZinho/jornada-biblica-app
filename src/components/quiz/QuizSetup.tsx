@@ -14,7 +14,7 @@ import { quizDifficulties } from '@/lib/quizData';
 import { Wand2 } from 'lucide-react';
 
 const quizSettingsSchema = z.object({
-  topic: z.string().min(1, "Por favor, digite ou selecione um tópico.").max(100, "O tópico deve ter no máximo 100 caracteres."),
+  topic: z.string().min(1, "Por favor, digite um tópico.").max(100, "O tópico deve ter no máximo 100 caracteres."),
   difficulty: z.enum(["todos", "fácil", "médio", "difícil"]),
   numberOfQuestions: z.number().min(1).max(20), 
 });
@@ -27,7 +27,7 @@ export function QuizSetup({ onStartQuiz }: QuizSetupProps) {
   const { control, handleSubmit, register, formState: { errors } } = useForm<QuizSettings>({
     resolver: zodResolver(quizSettingsSchema),
     defaultValues: {
-      topic: "Antigo Testamento", 
+      topic: "Todos os Tópicos", 
       difficulty: 'todos',
       numberOfQuestions: 5,
     },
@@ -53,7 +53,7 @@ export function QuizSetup({ onStartQuiz }: QuizSetupProps) {
             <Input
               id="topic"
               aria-label="Digite o tópico do quiz"
-              placeholder="Ex: Reis de Israel, Profetas, Milagres"
+              placeholder="Ex: Reis de Israel, Profetas, ou deixe 'Todos os Tópicos'"
               {...register("topic")}
             />
             {errors.topic && <p className="text-sm text-destructive">{errors.topic.message}</p>}
@@ -114,3 +114,5 @@ export function QuizSetup({ onStartQuiz }: QuizSetupProps) {
     </Card>
   );
 }
+
+    

@@ -24,8 +24,8 @@ const ExplainAnswerInputSchema = z.object({
 export type ExplainAnswerInput = z.infer<typeof ExplainAnswerInputSchema>;
 
 const ExplainAnswerOutputSchema = z.object({
-  briefContext: z.string().describe('Um breve contexto histórico ou narrativo sobre a questão, em português. Mantenha conciso (1-2 frases).'),
-  coreExplanation: z.string().describe('A explicação central da resposta correta, de forma clara e concisa, em português (2-3 frases no máximo).'),
+  briefContext: z.string().describe('Um contexto histórico ou narrativo um pouco mais detalhado sobre a questão, em português. Mantenha informativo e envolvente (2-4 frases).'),
+  coreExplanation: z.string().describe('A explicação central da resposta correta, de forma clara e bem concisa, em português (1-2 frases no máximo).'),
   bibleVerseReference: z.string().describe('A referência bíblica relevante para a explicação (ex: Gênesis 1:1), em português.'),
   bibleVerseText: z.string().describe('O texto do versículo bíblico correspondente à referência, em português.'),
 });
@@ -43,7 +43,7 @@ const prompt = ai.definePrompt({
   name: 'explainAnswerDetailsPromptPortuguese',
   input: {schema: ExplainAnswerInputSchema},
   output: {schema: ExplainAnswerOutputSchema},
-  prompt: `Você é um teólogo e historiador bíblico experiente, fornecendo explicações claras e concisas.
+  prompt: `Você é um teólogo e historiador bíblico experiente, fornecendo explicações claras e envolventes.
 Um usuário respondeu a uma pergunta do quiz. Sua tarefa é fornecer uma explicação enriquecedora sobre a resposta correta.
 
 Pergunta: {{{question}}}
@@ -53,13 +53,13 @@ Resposta Correta: {{{correctAnswer}}}
 Contexto Adicional Fornecido: {{{explanationContext}}}
 {{/if}}
 
-Por favor, forneça as seguintes informações em português, sendo o mais CONCISO possível para cada campo, para que não ocupe muito espaço na interface:
-1.  'briefContext': Um breve contexto histórico ou narrativo sobre a questão (idealmente 1-2 frases curtas).
-2.  'coreExplanation': A explicação central da resposta correta (idealmente 2-3 frases curtas e diretas).
+Por favor, forneça as seguintes informações em português:
+1.  'briefContext': Forneça um contexto histórico ou narrativo um pouco mais detalhado e interessante sobre a questão. Este deve ser o foco principal, um pouco mais longo que a explicação (idealmente 2-4 frases).
+2.  'coreExplanation': Uma explicação central BEM CURTA e direta da resposta correta (idealmente 1-2 frases curtas).
 3.  'bibleVerseReference': A referência de UM versículo bíblico relevante que fundamente ou ilustre a explicação (formato: Livro Capítulo:Versículo, ex: João 3:16).
 4.  'bibleVerseText': O texto completo desse versículo bíblico.
 
-Seja direto e evite introduções desnecessárias. O foco é fornecer valor rapidamente.
+Seja direto e evite introduções desnecessárias. O foco é fornecer valor rapidamente, com um contexto mais rico.
 Formate a saída como um objeto JSON que corresponda ao schema de saída especificado.
 `,
 });
@@ -79,3 +79,4 @@ const explainAnswerFlow = ai.defineFlow(
   }
 );
 
+    

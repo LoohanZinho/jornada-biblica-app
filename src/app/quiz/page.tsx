@@ -55,7 +55,7 @@ export default function QuizPage() {
             variant: "destructive",
         });
         generatedQuestions = sampleQuizQuestions.filter(q => 
-            (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic) &&
+            (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic || aiInput.topic === "Bíblia em geral") &&
             (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty)
         ).slice(0, selectedSettings.numberOfQuestions);
       }
@@ -66,7 +66,7 @@ export default function QuizPage() {
         const needed = selectedSettings.numberOfQuestions - finalQuestions.length;
         if (needed > 0) {
             const fallbackSample = sampleQuizQuestions.filter(q => 
-                (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic) &&
+                (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic || aiInput.topic === "Bíblia em geral") &&
                 (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty) &&
                 !finalQuestions.some(fq => fq.id === q.id) 
             ).slice(0, needed);
@@ -99,7 +99,7 @@ export default function QuizPage() {
       });
       
       let fallbackQuestions = sampleQuizQuestions.filter(q => 
-          (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic) &&
+          (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic || (selectedSettings.topic === "Todos os Tópicos" && "Bíblia em geral")) &&
           (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty)
       ).slice(0, selectedSettings.numberOfQuestions);
         
@@ -124,7 +124,6 @@ export default function QuizPage() {
     if (isCorrect) {
       setScore(prev => prev + 1);
     }
-    // Removido o toast de resposta incorreta, o feedback será dado no ExplanationDialog
 
     const currentQ = questions[currentQuestionIndex];
 
@@ -231,3 +230,4 @@ export default function QuizPage() {
     </div>
   );
 }
+
