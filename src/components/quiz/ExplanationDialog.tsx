@@ -30,13 +30,18 @@ export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, c
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isFetchingExplanationRef = useRef(false);
+  const currentExplanationKeyRef = useRef<string | null>(null); // To track the question key for the current explanation
 
   useEffect(() => {
+    const explanationKey = `${quizQuestion}-${userAnswer}-${correctAnswer}`;
+
     if (isOpen) {
-      // Only fetch if dialog is open, no explanation exists, not currently loading, and not already fetching.
-      if (!explanation && !isLoading && !isFetchingExplanationRef.current) {
+      // If it's a new question combination or no explanation yet, and not currently fetching.
+      if ((currentExplanationKeyRef.current !== explanationKey || !explanation) && !isFetchingExplanationRef.current) {
+        currentExplanationKeyRef.current = explanationKey; // Mark this combination as being processed
         setIsLoading(true);
         setError(null);
+        setExplanation(null); // Clear previous explanation if any for new key
         isFetchingExplanationRef.current = true;
         
         const input: ExplainAnswerInput = {
@@ -47,14 +52,22 @@ export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, c
 
         explainAnswer(input)
           .then(response => {
-            setExplanation(response.explanation);
+            // Only set explanation if it's for the current key we requested
+            if (currentExplanationKeyRef.current === explanationKey) {
+              setExplanation(response.explanation);
+            }
           })
           .catch(err => {
             console.error("Erro ao buscar explicação:", err);
-            setError("Desculpe, não conseguimos buscar uma explicação no momento. Tente novamente mais tarde.");
+            if (currentExplanationKeyRef.current === explanationKey) {
+              setError("Desculpe, não conseguimos buscar uma explicação no momento. Tente novamente mais tarde.");
+            }
           })
           .finally(() => {
-            setIsLoading(false);
+            // Only update loading state if it's for the current key
+            if (currentExplanationKeyRef.current === explanationKey) {
+              setIsLoading(false);
+            }
             isFetchingExplanationRef.current = false;
           });
       }
@@ -63,9 +76,10 @@ export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, c
       setExplanation(null);
       setIsLoading(false);
       setError(null);
-      isFetchingExplanationRef.current = false; // Ensure flag is reset
+      isFetchingExplanationRef.current = false; 
+      currentExplanationKeyRef.current = null; // Reset key when closed
     }
-  }, [isOpen, quizQuestion, userAnswer, correctAnswer, explanation, isLoading]); // Keep dependencies, flags and state checks handle re-entry
+  }, [isOpen, quizQuestion, userAnswer, correctAnswer, explanation]); // explanation is in deps to allow re-evaluation of !explanation
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

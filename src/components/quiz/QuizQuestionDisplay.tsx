@@ -26,52 +26,65 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
   const [imageError, setImageError] = useState(false);
   const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
   
-  const currentQuestionIdRef = useRef<string | null>(null);
-  const isFetchingImageRef = useRef(false);
+  const currentQuestionIdRef = useRef<string | null>(null); // Stores "id||question" to track current question for image fetching
+  const isFetchingImageRef = useRef(false); // Guard to prevent multiple fetches for the same image
 
   useEffect(() => {
-    setShowCorrectAnimation(false);
+    // NOT resetting setShowCorrectAnimation(false) here to allow animation to play fully.
+    // It's controlled by handleOptionClick's setTimeout.
 
-    if (questionData.id && questionData.question) {
-      // Only fetch if the question ID or text has changed and not currently fetching
-      if ((questionData.id !== currentQuestionIdRef.current?.split('||')[0] || questionData.question !== currentQuestionIdRef.current?.split('||')[1]) && !isFetchingImageRef.current) {
-        
+    if (!questionData.id || !questionData.question) {
+        setImageUrl(null);
+        setImageLoading(false);
+        setImageError(true);
+        currentQuestionIdRef.current = null;
+        isFetchingImageRef.current = false;
+        return;
+    }
+
+    const uniqueQuestionKey = `${questionData.id}||${questionData.question}`;
+
+    if (currentQuestionIdRef.current !== uniqueQuestionKey) {
+        // New question has arrived
+        currentQuestionIdRef.current = uniqueQuestionKey;
+        // Reset relevant states for the new question
         setSelectedAnswer(null);
         setIsAnswered(false);
         setImageUrl(null);
-        setImageLoading(true);
+        setImageLoading(true); 
         setImageError(false);
-        
-        currentQuestionIdRef.current = `${questionData.id}||${questionData.question}`;
+        isFetchingImageRef.current = false; // Reset the guard for the new question
+    }
+
+    // Fetch image if:
+    // 1. We are on the current question (currentQuestionIdRef.current === uniqueQuestionKey).
+    // 2. We don't have an imageUrl yet OR there was a previous error for this key.
+    // 3. We are not currently in the process of fetching this image (isFetchingImageRef.current === false).
+    if (currentQuestionIdRef.current === uniqueQuestionKey && (!imageUrl || imageError) && !isFetchingImageRef.current) {
         isFetchingImageRef.current = true;
+        setImageLoading(true); 
+        setImageError(false); 
 
         generateImageFromQuestion({ questionText: questionData.question })
-          .then(response => {
-            // Ensure this update is for the current question+text combination
-            if (currentQuestionIdRef.current === `${questionData.id}||${questionData.question}`) {
-              setImageUrl(response.imageUrl);
-            }
-          })
-          .catch(err => {
-            console.error("Erro ao gerar imagem:", err);
-            if (currentQuestionIdRef.current === `${questionData.id}||${questionData.question}`) {
-              setImageError(true);
-            }
-          })
-          .finally(() => {
-            if (currentQuestionIdRef.current === `${questionData.id}||${questionData.question}`) {
-              setImageLoading(false);
-            }
-            isFetchingImageRef.current = false; // Always reset fetch guard
-          });
-      } else if (questionData.id === currentQuestionIdRef.current?.split('||')[0] && questionData.question === currentQuestionIdRef.current?.split('||')[1] && imageUrl && !imageLoading) {
-        // If it's the same question and image is already loaded, do nothing.
-      }
-    } else {
-      setImageLoading(false);
-      setImageError(true);
+            .then(response => {
+                if (currentQuestionIdRef.current === uniqueQuestionKey) { 
+                    setImageUrl(response.imageUrl);
+                }
+            })
+            .catch(err => {
+                console.error("Erro ao gerar imagem:", err);
+                if (currentQuestionIdRef.current === uniqueQuestionKey) { 
+                    setImageError(true);
+                }
+            })
+            .finally(() => {
+                if (currentQuestionIdRef.current === uniqueQuestionKey) { 
+                    setImageLoading(false);
+                }
+                isFetchingImageRef.current = false; // Release the guard
+            });
     }
-  }, [questionData.id, questionData.question, imageUrl, imageLoading]); // Added imageUrl and imageLoading to dependencies to handle potential race conditions better
+  }, [questionData.id, questionData.question]); // Dependencies trigger on new question
 
   const handleOptionClick = (option: string) => {
     if (isAnswered) return;
@@ -81,7 +94,7 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
     if (isCorrect) {
       setShowCorrectAnimation(true);
       setTimeout(() => {
-        setShowCorrectAnimation(false);
+        setShowCorrectAnimation(false); 
       }, 800); 
     }
     onAnswer(option, isCorrect);
@@ -112,14 +125,14 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
              <div className="w-full h-full flex flex-col items-center justify-center bg-secondary">
                 <AlertCircle className="w-16 h-16 text-destructive mb-2" />
                 <p className="text-destructive-foreground">Não foi possível carregar a ilustração.</p>
-                <Image src="https://placehold.co/600x400.png" alt="Erro ao carregar ilustração" layout="fill" objectFit="cover" data-ai-hint={questionData.imageHint || "biblical scene"} />
+                <Image src={`https://placehold.co/600x400.png`} alt="Erro ao carregar ilustração" layout="fill" objectFit="cover" data-ai-hint={questionData.imageHint || "biblical scene"} />
             </div>
           )}
           {!imageLoading && !imageError && imageUrl && (
             <Image src={imageUrl} alt={`Ilustração para: ${questionData.question}`} layout="fill" objectFit="cover" data-ai-hint={questionData.imageHint || "bible scene"} />
           )}
-          {!imageLoading && !imageError && !imageUrl && ( // Fallback if imageUrl is somehow null after loading without error
-             <Image src="https://placehold.co/600x400.png" alt="Ilustração para a pergunta" layout="fill" objectFit="cover" data-ai-hint={questionData.imageHint || "bible scene"} />
+          {!imageLoading && !imageError && !imageUrl && ( 
+             <Image src={`https://placehold.co/600x400.png`} alt="Ilustração para a pergunta" layout="fill" objectFit="cover" data-ai-hint={questionData.imageHint || "bible scene"} />
           )}
         </div>
         
@@ -149,4 +162,3 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
     </Card>
   );
 }
-
