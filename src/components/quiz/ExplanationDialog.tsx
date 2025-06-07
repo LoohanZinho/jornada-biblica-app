@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { explainAnswer } from '@/ai/flows/explain-answer'; 
 import type { ExplainAnswerInput } from '@/ai/flows/explain-answer';
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
@@ -29,38 +29,43 @@ export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, c
   const [explanation, setExplanation] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isFetchingExplanationRef = useRef(false);
 
   useEffect(() => {
-    // Só busca explicação se o diálogo estiver aberto, não houver explicação e não estiver carregando
-    if (isOpen && !explanation && !isLoading) {
-      setIsLoading(true);
-      setError(null);
-      // Não resetamos 'explanation' aqui para evitar refetch se já tiver uma
-      
-      const input: ExplainAnswerInput = {
-        question: quizQuestion,
-        answer: userAnswer,
-        correctAnswer: correctAnswer,
-      };
+    if (isOpen) {
+      // Only fetch if dialog is open, no explanation exists, not currently loading, and not already fetching.
+      if (!explanation && !isLoading && !isFetchingExplanationRef.current) {
+        setIsLoading(true);
+        setError(null);
+        isFetchingExplanationRef.current = true;
+        
+        const input: ExplainAnswerInput = {
+          question: quizQuestion,
+          answer: userAnswer,
+          correctAnswer: correctAnswer,
+        };
 
-      explainAnswer(input)
-        .then(response => {
-          setExplanation(response.explanation);
-        })
-        .catch(err => {
-          console.error("Erro ao buscar explicação:", err);
-          setError("Desculpe, não conseguimos buscar uma explicação no momento. Tente novamente mais tarde.");
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
-    } else if (!isOpen) {
-      // Reseta o estado quando o diálogo é fechado para a próxima vez que abrir
+        explainAnswer(input)
+          .then(response => {
+            setExplanation(response.explanation);
+          })
+          .catch(err => {
+            console.error("Erro ao buscar explicação:", err);
+            setError("Desculpe, não conseguimos buscar uma explicação no momento. Tente novamente mais tarde.");
+          })
+          .finally(() => {
+            setIsLoading(false);
+            isFetchingExplanationRef.current = false;
+          });
+      }
+    } else {
+      // Reset state when the dialog is closed
       setExplanation(null);
       setIsLoading(false);
       setError(null);
+      isFetchingExplanationRef.current = false; // Ensure flag is reset
     }
-  }, [isOpen, quizQuestion, userAnswer, correctAnswer, explanation, isLoading]);
+  }, [isOpen, quizQuestion, userAnswer, correctAnswer, explanation, isLoading]); // Keep dependencies, flags and state checks handle re-entry
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

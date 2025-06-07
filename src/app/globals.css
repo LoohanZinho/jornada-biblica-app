@@ -110,3 +110,17 @@
     @apply font-headline;
   }
 }
+
+@layer utilities {
+  @keyframes correct-border-pulse {
+    0%, 100% {
+      border-color: hsl(var(--border));
+    }
+    50% {
+      border-color: hsl(var(--primary));
+    }
+  }
+  .animate-correct-border-pulse {
+    animation: correct-border-pulse 0.8s ease-in-out;
+  }
+}

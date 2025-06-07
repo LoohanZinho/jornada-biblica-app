@@ -24,48 +24,67 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
+  
   const currentQuestionIdRef = useRef<string | null>(null);
+  const isFetchingImageRef = useRef(false);
 
   useEffect(() => {
-    // Só busca nova imagem se o ID da pergunta mudou ou se não há imagem e não está carregando
-    if (questionData.id && (questionData.id !== currentQuestionIdRef.current || (!imageUrl && !imageLoading))) {
-      setSelectedAnswer(null);
-      setIsAnswered(false);
-      setImageUrl(null);
-      setImageLoading(true);
-      setImageError(false);
-      currentQuestionIdRef.current = questionData.id;
+    // Reset animation state when question changes
+    setShowCorrectAnimation(false);
 
-      generateImageFromQuestion({ questionText: questionData.question })
-        .then(response => {
-          // Verifica se a pergunta ainda é a mesma para evitar setar imagem de pergunta anterior
-          if (questionData.id === currentQuestionIdRef.current) {
-            setImageUrl(response.imageUrl);
-          }
-        })
-        .catch(err => {
-          console.error("Erro ao gerar imagem:", err);
-          if (questionData.id === currentQuestionIdRef.current) {
-            setImageError(true);
-          }
-        })
-        .finally(() => {
-          if (questionData.id === currentQuestionIdRef.current) {
-            setImageLoading(false);
-          }
-        });
-    } else if (!questionData.id) {
-        // Se não houver dados da pergunta, considera um erro de imagem.
-        setImageLoading(false);
-        setImageError(true);
+    if (questionData.id) {
+      // Only fetch if the question ID has changed
+      if (questionData.id !== currentQuestionIdRef.current) {
+        if (isFetchingImageRef.current) return; // Avoid concurrent fetches for the same new ID
+
+        setSelectedAnswer(null);
+        setIsAnswered(false);
+        setImageUrl(null);
+        setImageLoading(true);
+        setImageError(false);
+        
+        currentQuestionIdRef.current = questionData.id;
+        isFetchingImageRef.current = true;
+
+        generateImageFromQuestion({ questionText: questionData.question })
+          .then(response => {
+            // Ensure this update is for the current question
+            if (questionData.id === currentQuestionIdRef.current) {
+              setImageUrl(response.imageUrl);
+            }
+          })
+          .catch(err => {
+            console.error("Erro ao gerar imagem:", err);
+            if (questionData.id === currentQuestionIdRef.current) {
+              setImageError(true);
+            }
+          })
+          .finally(() => {
+            if (questionData.id === currentQuestionIdRef.current) {
+              setImageLoading(false);
+            }
+            isFetchingImageRef.current = false;
+          });
+      }
+    } else {
+      setImageLoading(false);
+      setImageError(true);
     }
-  }, [questionData.id, questionData.question, imageUrl, imageLoading]); 
+  // Effect dependencies: only re-run if the question content itself changes.
+  }, [questionData.id, questionData.question]); 
 
   const handleOptionClick = (option: string) => {
     if (isAnswered) return;
     setSelectedAnswer(option);
     setIsAnswered(true);
     const isCorrect = option === questionData.correctAnswer;
+    if (isCorrect) {
+      setShowCorrectAnimation(true);
+      setTimeout(() => {
+        setShowCorrectAnimation(false);
+      }, 800); // Duration of the animation
+    }
     onAnswer(option, isCorrect);
   };
 
@@ -77,7 +96,10 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
   };
 
   return (
-    <Card className="w-full animate-fade-in shadow-lg">
+    <Card className={cn(
+        "w-full shadow-lg",
+        showCorrectAnimation ? 'animate-correct-border-pulse' : 'animate-fade-in'
+      )}>
       <CardHeader>
         <div className="flex justify-between items-center mb-2">
           <CardTitle className="text-2xl md:text-3xl font-headline">{`Pergunta ${questionNumber}/${totalQuestions}`}</CardTitle>
