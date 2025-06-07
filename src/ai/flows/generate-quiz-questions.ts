@@ -46,15 +46,18 @@ const prompt = ai.definePrompt({
   output: {schema: GenerateQuizQuestionsOutputSchema}, 
   prompt: `Você é um especialista em Bíblia e teologia, criando um quiz interativo.
 Gere EXATAMENTE {{numberOfQuestions}} perguntas de quiz em português sobre o tópico "{{topic}}" com dificuldade "{{difficulty}}".
+
+IMPORTANTE: As perguntas devem focar EXCLUSIVAMENTE em acontecimentos históricos, narrativas e fatos bíblicos do passado (por exemplo: "Quem liderou o êxodo do Egito?", "Qual milagre Jesus realizou em Caná?", "Quem foi o primeiro rei de Israel?", "Qual era a profissão de Mateus antes de seguir Jesus?"). EVITE perguntas sobre interpretações teológicas, doutrinas abstratas, significados simbólicos ou conceitos puramente teóricos. Foque em eventos, personagens e ações concretas descritas na Bíblia.
+
 Para CADA uma das {{numberOfQuestions}} perguntas, forneça TODOS os seguintes campos:
-1.  'id': Um identificador único para a pergunta (ex: "q1-{{topic}}", "q2-geral").
-2.  'question': O texto completo da pergunta em português.
+1.  'id': Um identificador único para a pergunta (ex: "q1-{{topic}}-{{difficulty}}", "q2-geral-facil"). Use o tópico e dificuldade no id.
+2.  'question': O texto completo da pergunta em português, focada em acontecimentos.
 3.  'options': Um array com exatamente 4 opções de resposta em português.
 4.  'correctAnswer': A string exata de uma das opções que é a resposta correta, em português.
 5.  'topic': O tópico da pergunta (deve ser o mesmo que o input "{{topic}}").
 6.  'difficulty': A dificuldade da pergunta (deve ser a mesma que o input "{{difficulty}}").
-7.  'explanationContext': (Opcional) Uma frase curta em português que forneça contexto para uma futura explicação mais detalhada da resposta.
-8.  'imageHint': (Opcional, mas altamente preferível) Uma ou duas palavras-chave EM INGLÊS que possam ser usadas para encontrar ou gerar uma imagem relevante para a pergunta (ex: "ark flood", "desert stars"). Maximo de duas palavras.
+7.  'explanationContext': (Opcional, mas útil) Uma frase curta em português que forneça contexto para uma futura explicação mais detalhada da resposta, relacionada ao acontecimento.
+8.  'imageHint': (Opcional, mas altamente preferível) Uma ou duas palavras-chave EM INGLÊS que possam ser usadas para encontrar ou gerar uma imagem relevante para o acontecimento da pergunta (ex: "red sea parting", "water wine"). Maximo de duas palavras.
 
 Certifique-se de que a resposta correta ('correctAnswer') seja uma das strings presentes no array 'options'.
 Formate a saída como um objeto JSON que corresponda ao schema de saída especificado, onde o campo "questions" DEVE ser um array contendo EXATAMENTE {{numberOfQuestions}} objetos de pergunta.
@@ -83,12 +86,12 @@ const generateQuizQuestionsFlow = ai.defineFlow(
         console.warn("Pergunta da IA incompleta ou malformada:", aiQuestion);
         // Cria uma pergunta "inválida" de fallback para não quebrar o quiz, mas idealmente a IA deve seguir o prompt.
         return {
-          id: `invalid-q${index + 1}-${Date.now()}`,
+          id: aiQuestion.id || `invalid-q${index + 1}-${Date.now()}`,
           question: aiQuestion.question || "Pergunta inválida da IA",
           options: aiQuestion.options || ["Opção A", "Opção B", "Opção C", "Opção D"],
           correctAnswer: aiQuestion.correctAnswer || (aiQuestion.options ? aiQuestion.options[0] : "Opção A"),
-          topic: input.topic,
-          difficulty: input.difficulty,
+          topic: aiQuestion.topic || input.topic,
+          difficulty: aiQuestion.difficulty || input.difficulty,
           explanationContext: aiQuestion.explanationContext,
           imageHint: aiQuestion.imageHint,
         };

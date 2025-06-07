@@ -16,6 +16,7 @@ import { explainAnswer } from '@/ai/flows/explain-answer';
 import type { ExplainAnswerInput } from '@/ai/flows/explain-answer';
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
 import { Lightbulb } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ExplanationDialogProps {
   isOpen: boolean;
@@ -29,19 +30,25 @@ export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, c
   const [explanation, setExplanation] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const isFetchingExplanationRef = useRef(false);
-  const currentExplanationKeyRef = useRef<string | null>(null); // To track the question key for the current explanation
+  const currentExplanationKeyRef = useRef<string | null>(null); 
 
   useEffect(() => {
     const explanationKey = `${quizQuestion}-${userAnswer}-${correctAnswer}`;
 
     if (isOpen) {
-      // If it's a new question combination or no explanation yet, and not currently fetching.
+      if (userAnswer === correctAnswer) {
+        setFeedbackMessage("Sua resposta está correta!");
+      } else {
+        setFeedbackMessage(`Sua resposta está incorreta. A resposta correta é: ${correctAnswer}.`);
+      }
+      
       if ((currentExplanationKeyRef.current !== explanationKey || !explanation) && !isFetchingExplanationRef.current) {
-        currentExplanationKeyRef.current = explanationKey; // Mark this combination as being processed
+        currentExplanationKeyRef.current = explanationKey; 
         setIsLoading(true);
         setError(null);
-        setExplanation(null); // Clear previous explanation if any for new key
+        setExplanation(null); 
         isFetchingExplanationRef.current = true;
         
         const input: ExplainAnswerInput = {
@@ -52,7 +59,6 @@ export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, c
 
         explainAnswer(input)
           .then(response => {
-            // Only set explanation if it's for the current key we requested
             if (currentExplanationKeyRef.current === explanationKey) {
               setExplanation(response.explanation);
             }
@@ -64,7 +70,6 @@ export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, c
             }
           })
           .finally(() => {
-            // Only update loading state if it's for the current key
             if (currentExplanationKeyRef.current === explanationKey) {
               setIsLoading(false);
             }
@@ -72,14 +77,14 @@ export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, c
           });
       }
     } else {
-      // Reset state when the dialog is closed
+      setFeedbackMessage(null);
       setExplanation(null);
       setIsLoading(false);
       setError(null);
       isFetchingExplanationRef.current = false; 
-      currentExplanationKeyRef.current = null; // Reset key when closed
+      currentExplanationKeyRef.current = null; 
     }
-  }, [isOpen, quizQuestion, userAnswer, correctAnswer, explanation]); // explanation is in deps to allow re-evaluation of !explanation
+  }, [isOpen, quizQuestion, userAnswer, correctAnswer, explanation]); 
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -95,9 +100,20 @@ export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, c
         <div className="my-4 min-h-[150px]">
           {isLoading && <LoadingIndicator text="Gerando explicação..." />}
           {error && <p className="text-destructive text-center">{error}</p>}
-          {explanation && !isLoading && (
+          
+          {!isLoading && !error && (
             <ScrollArea className="h-[250px] rounded-md border p-4 bg-background shadow-inner">
-              <p className="text-sm whitespace-pre-wrap font-body leading-relaxed">{explanation}</p>
+              {feedbackMessage && (
+                <p className={cn(
+                  "font-semibold mb-3 text-md",
+                  userAnswer === correctAnswer ? "text-primary" : "text-destructive"
+                )}>
+                  {feedbackMessage}
+                </p>
+              )}
+              {explanation && (
+                <p className="text-sm whitespace-pre-wrap font-body leading-relaxed">{explanation}</p>
+              )}
             </ScrollArea>
           )}
         </div>
