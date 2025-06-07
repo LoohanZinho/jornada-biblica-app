@@ -31,7 +31,7 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
   const isFetchingImageRef = useRef(false); 
 
   useEffect(() => {
-    setShowCorrectAnimation(false); // Reset animation state for new questions
+    setShowCorrectAnimation(false); 
 
     if (!questionData || !questionData.id || !questionData.question) {
         setImageUrl(null);
@@ -72,19 +72,18 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
                 }
             })
             .finally(() => {
-                if (currentQuestionIdRef.current === uniqueQuestionKey) { 
+                 if (currentQuestionIdRef.current === uniqueQuestionKey) { 
                     setImageLoading(false);
-                }
-                // Don't reset isFetchingImageRef.current here if the fetch was for the current question,
-                // to prevent re-fetch if component re-renders before image is fully set.
-                // It gets reset when a new question arrives (uniqueQuestionKey changes).
-                // Or reset it if the specific fetch completed (success or error) for this question.
-                 if (currentQuestionIdRef.current === uniqueQuestionKey) {
-                    isFetchingImageRef.current = false;
+                    isFetchingImageRef.current = false; 
                  }
             });
+    } else if (currentQuestionIdRef.current === uniqueQuestionKey && imageUrl && !imageLoading) {
+        // If image is already loaded for the current question, no need to do anything.
+    } else if (currentQuestionIdRef.current === uniqueQuestionKey && !imageUrl && imageError && !imageLoading) {
+        // If there was an error and image is not loading, no need to re-fetch unless question changes.
     }
-  }, [questionData]); 
+
+  }, [questionData, imageUrl, imageError]); 
 
   const handleOptionClick = (option: string) => {
     if (isAnswered) return;
@@ -94,7 +93,8 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
     if (isCorrect) {
       setShowCorrectAnimation(true);
       setTimeout(() => {
-        setShowCorrectAnimation(false); 
+        // A animação é controlada por CSS, mas podemos resetar o estado se necessário após a duração
+        // setShowCorrectAnimation(false); // Comentado para deixar a animação rodar até a próxima pergunta
       }, 800); 
     }
     onAnswer(option, isCorrect);
@@ -109,8 +109,8 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
 
   return (
     <Card className={cn(
-        "w-full shadow-lg",
-        showCorrectAnimation ? 'animate-correct-border-pulse' : 'animate-fade-in'
+        "w-full shadow-lg animate-fade-in",
+        showCorrectAnimation ? 'animate-correct-border-pulse' : ''
       )}>
       <CardHeader>
         <div className="flex justify-between items-center mb-2">
@@ -136,14 +136,14 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
           )}
         </div>
         
-        <div className="flex items-start justify-center text-center mb-6">
-            <CardDescription className="text-lg md:text-xl font-body min-h-[3em] text-center flex-grow">
+        <div className="flex items-center justify-between text-left mb-6">
+            <CardDescription className="text-lg md:text-xl font-body min-h-[3em] flex-grow mr-2">
                 {questionData.question}
             </CardDescription>
             {questionData.hintText && !isAnswered && (
                 <Popover>
                     <PopoverTrigger asChild>
-                        <Button variant="ghost" size="icon" className="ml-2 shrink-0 text-primary hover:bg-primary/10">
+                        <Button variant="ghost" size="icon" className="shrink-0 text-primary hover:bg-primary/10 p-2">
                             <Lightbulb className="h-5 w-5" />
                             <span className="sr-only">Mostrar dica</span>
                         </Button>

@@ -36,6 +36,7 @@ export default function QuizPage() {
     setCurrentQuestionIndex(0);
     setScore(0);
     setQuizResults([]);
+    setQuestions([]); // Limpa perguntas anteriores
 
     try {
       const aiInput: GenerateQuizQuestionsInput = {
@@ -47,37 +48,54 @@ export default function QuizPage() {
       
       let generatedQuestions = response.questions as QuizQuestionType[];
 
+      toast({ // DEBUG: Para verificar quantas perguntas a IA está gerando
+        title: "IA Debug - Geração",
+        description: `A IA retornou ${generatedQuestions?.length || 0} perguntas. Solicitado: ${selectedSettings.numberOfQuestions}.`,
+        variant: "default",
+        duration: 7000,
+      });
+
       if (!generatedQuestions || generatedQuestions.length === 0) {
         toast({
-            title: "Nenhuma Pergunta Gerada",
+            title: "IA não Gerou Perguntas",
             description: "A IA não conseguiu gerar perguntas. Usando perguntas de exemplo.",
             variant: "destructive",
         });
-        generatedQuestions = sampleQuizQuestions.filter(q => 
-            (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic) &&
-            (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty)
-        ).slice(0, selectedSettings.numberOfQuestions);
+        generatedQuestions = []; // Força o fallback
+      }
+      
+      let finalQuestions = generatedQuestions.filter(q => q.question && q.options && q.correctAnswer); // Filtra perguntas malformadas
 
-        if (generatedQuestions.length === 0) {
-             toast({
-                title: "Nenhuma Pergunta Encontrada",
-                description: "Não foi possível encontrar perguntas com os critérios selecionados, nem mesmo nos exemplos.",
-                variant: "destructive",
-            });
-            setIsLoadingQuestions(false);
-            return;
+      if (finalQuestions.length < selectedSettings.numberOfQuestions) {
+        toast({
+            title: "Perguntas Insuficientes",
+            description: `A IA gerou ${finalQuestions.length} perguntas válidas. Completando com exemplos, se necessário.`,
+            variant: "default",
+        });
+        const needed = selectedSettings.numberOfQuestions - finalQuestions.length;
+        if (needed > 0) {
+            const fallbackSample = sampleQuizQuestions.filter(q => 
+                (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic) &&
+                (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty)
+            ).slice(0, needed);
+            finalQuestions = [...finalQuestions, ...fallbackSample];
         }
       }
       
-      const finalQuestions = generatedQuestions.slice(0, selectedSettings.numberOfQuestions);
-      if (finalQuestions.length < selectedSettings.numberOfQuestions && response.questions?.length > 0) { // only show if AI generated something but less
-         toast({
-            title: "Menos Perguntas Geradas",
-            description: `A IA gerou ${finalQuestions.length} perguntas. Ajustando o tamanho do quiz.`,
-            variant: "default",
-        });
-      }
+      // Garante que não exceda o número solicitado
+      finalQuestions = finalQuestions.slice(0, selectedSettings.numberOfQuestions);
 
+      if (finalQuestions.length === 0) {
+         toast({
+            title: "Nenhuma Pergunta Encontrada",
+            description: "Não foi possível encontrar ou gerar perguntas com os critérios selecionados.",
+            variant: "destructive",
+        });
+        setIsLoadingQuestions(false);
+        setQuizStarted(false); // Volta para a tela de setup
+        return;
+      }
+      
       setQuestions(finalQuestions);
       setQuizStarted(true);
 
@@ -85,26 +103,27 @@ export default function QuizPage() {
       console.error("Erro ao gerar perguntas do quiz:", error);
       toast({
         title: "Erro ao Gerar Perguntas",
-        description: "Houve um problema com a IA. Usando perguntas de exemplo.",
+        description: `Houve um problema com a IA: ${(error as Error).message}. Usando perguntas de exemplo.`,
         variant: "destructive",
       });
-      // Fallback to sample questions
-        let fallbackQuestions = sampleQuizQuestions.filter(q => 
-            (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic) &&
-            (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty)
-        ).slice(0, selectedSettings.numberOfQuestions);
+      
+      let fallbackQuestions = sampleQuizQuestions.filter(q => 
+          (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic) &&
+          (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty)
+      ).slice(0, selectedSettings.numberOfQuestions);
         
-        if (fallbackQuestions.length === 0) {
-             toast({
-                title: "Nenhuma Pergunta Encontrada",
-                description: "Não foi possível encontrar perguntas com os critérios selecionados, nem mesmo nos exemplos.",
-                variant: "destructive",
-            });
-            setIsLoadingQuestions(false);
-            return;
-        }
-        setQuestions(fallbackQuestions);
-        setQuizStarted(true);
+      if (fallbackQuestions.length === 0) {
+           toast({
+              title: "Nenhuma Pergunta de Exemplo",
+              description: "Não foi possível encontrar perguntas de exemplo com os critérios selecionados.",
+              variant: "destructive",
+          });
+          setIsLoadingQuestions(false);
+          setQuizStarted(false); // Volta para a tela de setup
+          return;
+      }
+      setQuestions(fallbackQuestions);
+      setQuizStarted(true);
     } finally {
       setIsLoadingQuestions(false);
     }
@@ -113,7 +132,6 @@ export default function QuizPage() {
   const handleAnswer = (selectedAnswer: string, isCorrect: boolean) => {
     if (isCorrect) {
       setScore(prev => prev + 1);
-      // Toast de acerto removido para evitar popup
     } else {
         toast({
         title: "Ops!",
@@ -227,3 +245,4 @@ export default function QuizPage() {
     </div>
   );
 }
+
