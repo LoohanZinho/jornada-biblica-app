@@ -1,30 +1,33 @@
+
 export interface QuizQuestionType {
   id: string;
-  question: string;
-  options: string[];
-  correctAnswer: string;
-  topic: string;
-  difficulty: "easy" | "medium" | "hard";
+  question: string; 
+  options: string[]; 
+  correctAnswer: string; 
+  topic: string; 
+  difficulty: "fácil" | "médio" | "difícil"; 
   explanationContext?: string; 
-  imageHint?: string; // For data-ai-hint
+  imageHint?: string; 
 }
 
 export interface DailyVerse {
   id: string;
-  reference: string;
-  text: string;
-  theme?: string; // Optional theme for the verse
+  reference: string; 
+  text: string; 
+  theme?: string; 
 }
 
 export interface QuizSettings {
-  topic: string;
-  difficulty: "easy" | "medium" | "hard" | "any";
+  topic: string; 
+  difficulty: "fácil" | "médio" | "difícil" | "todos"; 
   numberOfQuestions: number;
 }
 
 export interface QuizResult {
-  question: string;
-  selectedAnswer: string;
-  correctAnswer: string;
+  question: string; 
+  selectedAnswer: string; 
+  correctAnswer: string; 
   isCorrect: boolean;
 }
+
+    

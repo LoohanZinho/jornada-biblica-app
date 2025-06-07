@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -11,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import React, { useState, useEffect } from 'react';
-import { explainAnswer } from '@/ai/flows/explain-answer';
+import { explainAnswer } from '@/ai/flows/explain-answer'; 
 import type { ExplainAnswerInput } from '@/ai/flows/explain-answer';
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
 import { Lightbulb } from "lucide-react";
@@ -19,9 +20,9 @@ import { Lightbulb } from "lucide-react";
 interface ExplanationDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  quizQuestion: string;
-  userAnswer: string;
-  correctAnswer: string;
+  quizQuestion: string; 
+  userAnswer: string; 
+  correctAnswer: string; 
 }
 
 export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, correctAnswer }: ExplanationDialogProps) {
@@ -46,8 +47,8 @@ export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, c
           setExplanation(response.explanation);
         })
         .catch(err => {
-          console.error("Error fetching explanation:", err);
-          setError("Sorry, we couldn't fetch an explanation at this time. Please try again later.");
+          console.error("Erro ao buscar explicação:", err);
+          setError("Desculpe, não conseguimos buscar uma explicação no momento. Tente novamente mais tarde.");
         })
         .finally(() => {
           setIsLoading(false);
@@ -60,14 +61,14 @@ export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, c
       <DialogContent className="sm:max-w-lg bg-card text-card-foreground shadow-xl rounded-lg">
         <DialogHeader className="text-center">
           <Lightbulb className="h-10 w-10 text-primary mx-auto mb-2" />
-          <DialogTitle className="text-2xl font-headline">Answer Explanation</DialogTitle>
+          <DialogTitle className="text-2xl font-headline">Explicação da Resposta</DialogTitle>
           <DialogDescription className="text-md">
-            Delve deeper into the context of the question.
+            Aprofunde-se no contexto da pergunta.
           </DialogDescription>
         </DialogHeader>
         
         <div className="my-4 min-h-[200px]">
-          {isLoading && <LoadingIndicator text="Generating explanation..." />}
+          {isLoading && <LoadingIndicator text="Gerando explicação..." />}
           {error && <p className="text-destructive text-center">{error}</p>}
           {explanation && !isLoading && (
             <ScrollArea className="h-[300px] rounded-md border p-4 bg-background shadow-inner">
@@ -78,10 +79,12 @@ export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, c
 
         <DialogFooter className="sm:justify-center">
           <Button onClick={onClose} variant="default" className="w-full sm:w-auto">
-            Got it!
+            Entendi!
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
+    

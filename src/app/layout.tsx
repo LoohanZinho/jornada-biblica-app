@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
@@ -5,8 +6,8 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
-  title: 'Biblical Quest',
-  description: 'An interactive journey through biblical history and wisdom.',
+  title: 'Jornada Bíblica',
+  description: 'Uma jornada interativa pela história e sabedoria bíblica.',
 };
 
 export default function RootLayout({
@@ -15,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -32,3 +33,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+    

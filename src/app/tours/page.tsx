@@ -1,3 +1,4 @@
+
 import { MapPinned } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -7,17 +8,19 @@ export default function VirtualToursPage() {
       <Card className="w-full max-w-lg shadow-lg">
         <CardHeader>
           <MapPinned className="h-20 w-20 text-primary mx-auto mb-6" />
-          <CardTitle className="text-4xl font-headline text-primary">Virtual Biblical Tours</CardTitle>
+          <CardTitle className="text-4xl font-headline text-primary">Passeios Bíblicos Virtuais</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-xl text-foreground/80 mb-4">
-            This exciting feature is currently under development.
+            Este recurso emocionante está atualmente em desenvolvimento.
           </p>
           <p className="text-md text-muted-foreground">
-            Soon, you'll be able to explore virtual reconstructions of significant biblical locations, bringing history to life like never before. Stay tuned for updates!
+            Em breve, você poderá explorar reconstruções virtuais de locais bíblicos significativos, trazendo a história à vida como nunca antes. Fique atento às atualizações!
           </p>
         </CardContent>
       </Card>
     </div>
   );
 }
+
+    

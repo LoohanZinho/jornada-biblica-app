@@ -1,9 +1,11 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { QuizQuestionType, QuizSettings, QuizResult } from '@/types';
-import { sampleQuizQuestions } from '@/lib/quizData';
+import { generateQuizQuestions, type GenerateQuizQuestionsInput } from '@/ai/flows/generate-quiz-questions';
+import { sampleQuizQuestions } from '@/lib/quizData'; // For fallback
 import { QuizSetup } from '@/components/quiz/QuizSetup';
 import { QuizQuestionDisplay } from '@/components/quiz/QuizQuestionDisplay';
 import { ExplanationDialog } from '@/components/quiz/ExplanationDialog';
@@ -11,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, RotateCcw } from 'lucide-react';
+import { LoadingIndicator } from '@/components/common/LoadingIndicator';
 
 export default function QuizPage() {
   const [settings, setSettings] = useState<QuizSettings | null>(null);
@@ -22,81 +25,123 @@ export default function QuizPage() {
   
   const [showExplanation, setShowExplanation] = useState(false);
   const [explanationData, setExplanationData] = useState<{ question: string; userAnswer: string; correctAnswer: string } | null>(null);
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
 
   const router = useRouter();
   const { toast } = useToast();
 
-  const filterAndSelectQuestions = useCallback((allQuestions: QuizQuestionType[], currentSettings: QuizSettings): QuizQuestionType[] => {
-    let filtered = allQuestions;
-    if (currentSettings.topic !== "All Topics") {
-      filtered = filtered.filter(q => q.topic === currentSettings.topic);
-    }
-    if (currentSettings.difficulty !== "any") {
-      filtered = filtered.filter(q => q.difficulty === currentSettings.difficulty);
-    }
-    // Shuffle and take N questions
-    const shuffled = filtered.sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, currentSettings.numberOfQuestions);
-  }, []);
-
-
-  const handleStartQuiz = useCallback((selectedSettings: QuizSettings) => {
-    const selectedQuestions = filterAndSelectQuestions(sampleQuizQuestions, selectedSettings);
-    
-    if (selectedQuestions.length === 0) {
-        toast({
-            title: "No Questions Found",
-            description: "Could not find questions matching your criteria. Please try different settings.",
-            variant: "destructive",
-        });
-        return;
-    }
-    if (selectedQuestions.length < selectedSettings.numberOfQuestions) {
-        toast({
-            title: "Fewer Questions Found",
-            description: `Only found ${selectedQuestions.length} questions for your criteria. Adjusting quiz length.`,
-            variant: "default",
-        });
-        selectedSettings.numberOfQuestions = selectedQuestions.length;
-    }
-
+  const handleStartQuiz = useCallback(async (selectedSettings: QuizSettings) => {
+    setIsLoadingQuestions(true);
     setSettings(selectedSettings);
-    setQuestions(selectedQuestions);
     setCurrentQuestionIndex(0);
     setScore(0);
     setQuizResults([]);
-    setQuizStarted(true);
-  }, [toast, filterAndSelectQuestions]);
+
+    try {
+      const aiInput: GenerateQuizQuestionsInput = {
+        topic: selectedSettings.topic === "Todos os Tópicos" ? "Bíblia em geral" : selectedSettings.topic,
+        difficulty: selectedSettings.difficulty === "todos" ? "médio" : selectedSettings.difficulty,
+        numberOfQuestions: selectedSettings.numberOfQuestions,
+      };
+      const response = await generateQuizQuestions(aiInput);
+      
+      let generatedQuestions = response.questions as QuizQuestionType[];
+
+      if (!generatedQuestions || generatedQuestions.length === 0) {
+        toast({
+            title: "Nenhuma Pergunta Gerada",
+            description: "A IA não conseguiu gerar perguntas. Usando perguntas de exemplo.",
+            variant: "destructive",
+        });
+        generatedQuestions = sampleQuizQuestions.filter(q => 
+            (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic) &&
+            (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty)
+        ).slice(0, selectedSettings.numberOfQuestions);
+
+        if (generatedQuestions.length === 0) {
+             toast({
+                title: "Nenhuma Pergunta Encontrada",
+                description: "Não foi possível encontrar perguntas com os critérios selecionados, nem mesmo nos exemplos.",
+                variant: "destructive",
+            });
+            setIsLoadingQuestions(false);
+            return;
+        }
+      }
+      
+      const finalQuestions = generatedQuestions.slice(0, selectedSettings.numberOfQuestions);
+      if (finalQuestions.length < selectedSettings.numberOfQuestions && response.questions?.length > 0) { // only show if AI generated something but less
+         toast({
+            title: "Menos Perguntas Geradas",
+            description: `A IA gerou ${finalQuestions.length} perguntas. Ajustando o tamanho do quiz.`,
+            variant: "default",
+        });
+      }
+
+      setQuestions(finalQuestions);
+      setQuizStarted(true);
+
+    } catch (error) {
+      console.error("Erro ao gerar perguntas do quiz:", error);
+      toast({
+        title: "Erro ao Gerar Perguntas",
+        description: "Houve um problema com a IA. Usando perguntas de exemplo.",
+        variant: "destructive",
+      });
+      // Fallback to sample questions
+        let fallbackQuestions = sampleQuizQuestions.filter(q => 
+            (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic) &&
+            (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty)
+        ).slice(0, selectedSettings.numberOfQuestions);
+        
+        if (fallbackQuestions.length === 0) {
+             toast({
+                title: "Nenhuma Pergunta Encontrada",
+                description: "Não foi possível encontrar perguntas com os critérios selecionados, nem mesmo nos exemplos.",
+                variant: "destructive",
+            });
+            setIsLoadingQuestions(false);
+            return;
+        }
+        setQuestions(fallbackQuestions);
+        setQuizStarted(true);
+    } finally {
+      setIsLoadingQuestions(false);
+    }
+  }, [toast]);
 
   const handleAnswer = (selectedAnswer: string, isCorrect: boolean) => {
     if (isCorrect) {
       setScore(prev => prev + 1);
        toast({
-        title: "Correct!",
-        description: "Well done!",
+        title: "Correto!",
+        description: "Muito bem!",
         variant: "default",
         duration: 2000,
       });
     } else {
         toast({
-        title: "Incorrect",
-        description: `The correct answer was: ${questions[currentQuestionIndex].correctAnswer}`,
+        title: "Incorreto",
+        description: `A resposta correta era: ${questions[currentQuestionIndex].correctAnswer}`,
         variant: "destructive",
         duration: 3000,
       });
     }
 
+    const currentQuestionText = questions[currentQuestionIndex].question;
+    const correctAnswerText = questions[currentQuestionIndex].correctAnswer;
+
     setQuizResults(prev => [...prev, {
-      question: questions[currentQuestionIndex].question,
+      question: currentQuestionText,
       selectedAnswer,
-      correctAnswer: questions[currentQuestionIndex].correctAnswer,
+      correctAnswer: correctAnswerText,
       isCorrect
     }]);
     
     setExplanationData({
-      question: questions[currentQuestionIndex].question,
+      question: currentQuestionText,
       userAnswer: selectedAnswer,
-      correctAnswer: questions[currentQuestionIndex].correctAnswer,
+      correctAnswer: correctAnswerText,
     });
     setShowExplanation(true); 
   };
@@ -107,8 +152,7 @@ export default function QuizPage() {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
-      // Quiz finished
-      localStorage.setItem('quizResults', JSON.stringify({ score, totalQuestions: questions.length, results: quizResults, areasOfInterest: settings?.topic || 'General Knowledge' }));
+      localStorage.setItem('quizResults', JSON.stringify({ score, totalQuestions: questions.length, results: quizResults, areasOfInterest: settings?.topic || 'Conhecimento Geral' }));
       router.push(`/quiz/results`);
     }
   };
@@ -120,40 +164,52 @@ export default function QuizPage() {
     setCurrentQuestionIndex(0);
     setScore(0);
     setQuizResults([]);
+    setIsLoadingQuestions(false);
   };
+
+  if (isLoadingQuestions) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
+        <LoadingIndicator text="Gerando suas perguntas com IA..." size={48} />
+        <p className="mt-4 text-muted-foreground">Isso pode levar alguns segundos...</p>
+      </div>
+    );
+  }
 
   if (!quizStarted || !settings) {
     return <QuizSetup onStartQuiz={handleStartQuiz} />;
   }
 
-  if (questions.length === 0) {
+  if (questions.length === 0 && !isLoadingQuestions) {
     return (
       <div className="text-center py-10">
-        <p className="text-xl text-muted-foreground mb-4">No questions available for the selected criteria.</p>
-        <Button onClick={resetQuiz} variant="outline">Try Different Settings</Button>
+        <p className="text-xl text-muted-foreground mb-4">Nenhuma pergunta disponível para os critérios selecionados.</p>
+        <Button onClick={resetQuiz} variant="outline">Tentar Configurações Diferentes</Button>
       </div>
     );
   }
   
   const currentQuestionData = questions[currentQuestionIndex];
-  const progressPercentage = ((currentQuestionIndex + 1) / questions.length) * 100;
+  const progressPercentage = questions.length > 0 ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0;
 
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-primary font-headline">Biblical Quest</h2>
+        <h2 className="text-2xl font-bold text-primary font-headline">Jornada Bíblica</h2>
         <Button onClick={resetQuiz} variant="outline" size="sm">
-          <RotateCcw className="mr-2 h-4 w-4" /> Reset Quiz
+          <RotateCcw className="mr-2 h-4 w-4" /> Reiniciar Quiz
         </Button>
       </div>
       <Progress value={progressPercentage} className="w-full h-3" />
       
-      <QuizQuestionDisplay
-        questionData={currentQuestionData}
-        onAnswer={handleAnswer}
-        questionNumber={currentQuestionIndex + 1}
-        totalQuestions={questions.length}
-      />
+      {currentQuestionData && (
+        <QuizQuestionDisplay
+          questionData={currentQuestionData}
+          onAnswer={handleAnswer}
+          questionNumber={currentQuestionIndex + 1}
+          totalQuestions={questions.length}
+        />
+      )}
 
       {explanationData && (
         <ExplanationDialog
@@ -168,7 +224,7 @@ export default function QuizPage() {
       {showExplanation && (
          <div className="text-center mt-6">
             <Button onClick={handleNextAfterExplanation} size="lg">
-                {currentQuestionIndex < questions.length - 1 ? "Next Question" : "View Results"}
+                {currentQuestionIndex < questions.length - 1 ? "Próxima Pergunta" : "Ver Resultados"}
                 <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
          </div>
@@ -176,3 +232,5 @@ export default function QuizPage() {
     </div>
   );
 }
+
+    

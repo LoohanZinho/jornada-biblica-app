@@ -1,23 +1,23 @@
-// src/ai/flows/generate-image-from-question.ts
+
 'use server';
 /**
- * @fileOverview Generates an image based on a given question using Gemini.
+ * @fileOverview Gera uma imagem baseada em uma pergunta fornecida (em português) usando Gemini.
  *
- * - generateImageFromQuestion - A function that generates an image from a question.
- * - GenerateImageFromQuestionInput - The input type for the generateImageFromQuestion function.
- * - GenerateImageFromQuestionOutput - The return type for the generateImageFromQuestion function.
+ * - generateImageFromQuestion - Uma função que gera uma imagem a partir de uma pergunta.
+ * - GenerateImageFromQuestionInput - O tipo de entrada para a função generateImageFromQuestion.
+ * - GenerateImageFromQuestionOutput - O tipo de retorno para a função generateImageFromQuestion.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateImageFromQuestionInputSchema = z.object({
-  questionText: z.string().describe('The text of the question to generate an image for.'),
+  questionText: z.string().describe('O texto da pergunta (em português) para gerar uma imagem.'),
 });
 export type GenerateImageFromQuestionInput = z.infer<typeof GenerateImageFromQuestionInputSchema>;
 
 const GenerateImageFromQuestionOutputSchema = z.object({
-  imageUrl: z.string().describe('The generated image URL as a data URI.'),
+  imageUrl: z.string().describe('A URL da imagem gerada como um data URI.'),
 });
 export type GenerateImageFromQuestionOutput = z.infer<typeof GenerateImageFromQuestionOutputSchema>;
 
@@ -25,28 +25,30 @@ export async function generateImageFromQuestion(input: GenerateImageFromQuestion
   return generateImageFromQuestionFlow(input);
 }
 
-const generateImagePrompt = ai.definePrompt({
-  name: 'generateImagePrompt',
-  input: {schema: GenerateImageFromQuestionInputSchema},
-  output: {schema: GenerateImageFromQuestionOutputSchema},
-  prompt: `Generate an image that visually represents the context of the following question:\n\n{{questionText}}`,
-});
+const imageGenerationPromptForModel = (questionText: string) => {
+  return `Gere uma imagem que represente visualmente o contexto da seguinte pergunta bíblica: "${questionText}". A imagem deve ser adequada para um quiz bíblico. Estilo ilustrativo ou pictórico.`;
+}
 
 const generateImageFromQuestionFlow = ai.defineFlow(
   {
-    name: 'generateImageFromQuestionFlow',
+    name: 'generateImageFromQuestionFlowPortuguese',
     inputSchema: GenerateImageFromQuestionInputSchema,
     outputSchema: GenerateImageFromQuestionOutputSchema,
   },
   async input => {
     const {media} = await ai.generate({
       model: 'googleai/gemini-2.0-flash-exp',
-      prompt: input.questionText,
+      prompt: imageGenerationPromptForModel(input.questionText),
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
       },
     });
 
-    return {imageUrl: media.url!};
+    if (!media || !media.url) {
+        throw new Error('Falha ao gerar imagem ou URL da imagem não encontrada.');
+    }
+    return {imageUrl: media.url};
   }
 );
+
+    
