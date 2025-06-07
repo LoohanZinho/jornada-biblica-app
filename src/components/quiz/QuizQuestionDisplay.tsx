@@ -8,8 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { generateImageFromQuestion } from '@/ai/flows/generate-image-from-question'; 
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, XCircle, Lightbulb } from 'lucide-react';
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface QuizQuestionDisplayProps {
   questionData: QuizQuestionType; 
@@ -26,14 +27,13 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
   const [imageError, setImageError] = useState(false);
   const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
   
-  const currentQuestionIdRef = useRef<string | null>(null); // Stores "id||question" to track current question for image fetching
-  const isFetchingImageRef = useRef(false); // Guard to prevent multiple fetches for the same image
+  const currentQuestionIdRef = useRef<string | null>(null); 
+  const isFetchingImageRef = useRef(false); 
 
   useEffect(() => {
-    // NOT resetting setShowCorrectAnimation(false) here to allow animation to play fully.
-    // It's controlled by handleOptionClick's setTimeout.
+    setShowCorrectAnimation(false); // Reset animation state for new questions
 
-    if (!questionData.id || !questionData.question) {
+    if (!questionData || !questionData.id || !questionData.question) {
         setImageUrl(null);
         setImageLoading(false);
         setImageError(true);
@@ -45,21 +45,15 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
     const uniqueQuestionKey = `${questionData.id}||${questionData.question}`;
 
     if (currentQuestionIdRef.current !== uniqueQuestionKey) {
-        // New question has arrived
         currentQuestionIdRef.current = uniqueQuestionKey;
-        // Reset relevant states for the new question
         setSelectedAnswer(null);
         setIsAnswered(false);
         setImageUrl(null);
         setImageLoading(true); 
         setImageError(false);
-        isFetchingImageRef.current = false; // Reset the guard for the new question
+        isFetchingImageRef.current = false; 
     }
 
-    // Fetch image if:
-    // 1. We are on the current question (currentQuestionIdRef.current === uniqueQuestionKey).
-    // 2. We don't have an imageUrl yet OR there was a previous error for this key.
-    // 3. We are not currently in the process of fetching this image (isFetchingImageRef.current === false).
     if (currentQuestionIdRef.current === uniqueQuestionKey && (!imageUrl || imageError) && !isFetchingImageRef.current) {
         isFetchingImageRef.current = true;
         setImageLoading(true); 
@@ -81,10 +75,16 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
                 if (currentQuestionIdRef.current === uniqueQuestionKey) { 
                     setImageLoading(false);
                 }
-                isFetchingImageRef.current = false; // Release the guard
+                // Don't reset isFetchingImageRef.current here if the fetch was for the current question,
+                // to prevent re-fetch if component re-renders before image is fully set.
+                // It gets reset when a new question arrives (uniqueQuestionKey changes).
+                // Or reset it if the specific fetch completed (success or error) for this question.
+                 if (currentQuestionIdRef.current === uniqueQuestionKey) {
+                    isFetchingImageRef.current = false;
+                 }
             });
     }
-  }, [questionData.id, questionData.question]); // Dependencies trigger on new question
+  }, [questionData]); 
 
   const handleOptionClick = (option: string) => {
     if (isAnswered) return;
@@ -136,7 +136,25 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
           )}
         </div>
         
-        <CardDescription className="text-lg md:text-xl font-body min-h-[3em] mb-6 text-center">{questionData.question}</CardDescription>
+        <div className="flex items-start justify-center text-center mb-6">
+            <CardDescription className="text-lg md:text-xl font-body min-h-[3em] text-center flex-grow">
+                {questionData.question}
+            </CardDescription>
+            {questionData.hintText && !isAnswered && (
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="ghost" size="icon" className="ml-2 shrink-0 text-primary hover:bg-primary/10">
+                            <Lightbulb className="h-5 w-5" />
+                            <span className="sr-only">Mostrar dica</span>
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto max-w-xs sm:max-w-sm text-sm p-3 bg-card shadow-lg rounded-md border">
+                        <p className="font-semibold text-primary mb-1">Dica:</p>
+                        {questionData.hintText}
+                    </PopoverContent>
+                </Popover>
+            )}
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {questionData.options.map((option, index) => (
