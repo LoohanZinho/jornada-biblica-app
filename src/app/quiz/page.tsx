@@ -113,12 +113,7 @@ export default function QuizPage() {
   const handleAnswer = (selectedAnswer: string, isCorrect: boolean) => {
     if (isCorrect) {
       setScore(prev => prev + 1);
-       toast({
-        title: "Correto!",
-        description: "Muito bem! Continue assim!",
-        variant: "default",
-        duration: 2000,
-      });
+      // Toast de acerto removido para evitar popup
     } else {
         toast({
         title: "Ops!",

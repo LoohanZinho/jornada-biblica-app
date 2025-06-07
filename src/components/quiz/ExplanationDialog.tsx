@@ -31,10 +31,11 @@ export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, c
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen) {
+    // Só busca explicação se o diálogo estiver aberto, não houver explicação e não estiver carregando
+    if (isOpen && !explanation && !isLoading) {
       setIsLoading(true);
       setError(null);
-      setExplanation(null);
+      // Não resetamos 'explanation' aqui para evitar refetch se já tiver uma
       
       const input: ExplainAnswerInput = {
         question: quizQuestion,
@@ -53,8 +54,13 @@ export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, c
         .finally(() => {
           setIsLoading(false);
         });
+    } else if (!isOpen) {
+      // Reseta o estado quando o diálogo é fechado para a próxima vez que abrir
+      setExplanation(null);
+      setIsLoading(false);
+      setError(null);
     }
-  }, [isOpen, quizQuestion, userAnswer, correctAnswer]);
+  }, [isOpen, quizQuestion, userAnswer, correctAnswer, explanation, isLoading]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -67,11 +73,11 @@ export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, c
           </DialogDescription>
         </DialogHeader>
         
-        <div className="my-4 min-h-[150px]"> {/* Reduced min-h for potentially shorter content */}
+        <div className="my-4 min-h-[150px]">
           {isLoading && <LoadingIndicator text="Gerando explicação..." />}
           {error && <p className="text-destructive text-center">{error}</p>}
           {explanation && !isLoading && (
-            <ScrollArea className="h-[250px] rounded-md border p-4 bg-background shadow-inner"> {/* Adjusted height if needed */}
+            <ScrollArea className="h-[250px] rounded-md border p-4 bg-background shadow-inner">
               <p className="text-sm whitespace-pre-wrap font-body leading-relaxed">{explanation}</p>
             </ScrollArea>
           )}

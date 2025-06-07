@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { generateImageFromQuestion } from '@/ai/flows/generate-image-from-question'; 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
@@ -24,31 +24,42 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const currentQuestionIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    setSelectedAnswer(null);
-    setIsAnswered(false);
-    setImageUrl(null);
-    setImageLoading(true);
-    setImageError(false);
+    // Só busca nova imagem se o ID da pergunta mudou ou se não há imagem e não está carregando
+    if (questionData.id && (questionData.id !== currentQuestionIdRef.current || (!imageUrl && !imageLoading))) {
+      setSelectedAnswer(null);
+      setIsAnswered(false);
+      setImageUrl(null);
+      setImageLoading(true);
+      setImageError(false);
+      currentQuestionIdRef.current = questionData.id;
 
-    if (questionData.id && questionData.question) { // Garante que temos dados válidos
       generateImageFromQuestion({ questionText: questionData.question })
         .then(response => {
-          setImageUrl(response.imageUrl);
+          // Verifica se a pergunta ainda é a mesma para evitar setar imagem de pergunta anterior
+          if (questionData.id === currentQuestionIdRef.current) {
+            setImageUrl(response.imageUrl);
+          }
         })
         .catch(err => {
           console.error("Erro ao gerar imagem:", err);
-          setImageError(true);
+          if (questionData.id === currentQuestionIdRef.current) {
+            setImageError(true);
+          }
         })
         .finally(() => {
-          setImageLoading(false);
+          if (questionData.id === currentQuestionIdRef.current) {
+            setImageLoading(false);
+          }
         });
-    } else {
+    } else if (!questionData.id) {
+        // Se não houver dados da pergunta, considera um erro de imagem.
         setImageLoading(false);
-        setImageError(true); // Se não houver dados da pergunta, considera um erro de imagem.
+        setImageError(true);
     }
-  }, [questionData.id, questionData.question]); // Depende do ID e do texto da pergunta
+  }, [questionData.id, questionData.question, imageUrl, imageLoading]); 
 
   const handleOptionClick = (option: string) => {
     if (isAnswered) return;
@@ -86,7 +97,6 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
           {!imageLoading && !imageError && imageUrl && (
             <Image src={imageUrl} alt={`Ilustração para: ${questionData.question}`} layout="fill" objectFit="cover" data-ai-hint={questionData.imageHint || "bible scene"} />
           )}
-          {/* Fallback se imageUrl for null mas não houve erro nem está carregando (pode acontecer se a API não retornar URL) */}
           {!imageLoading && !imageError && !imageUrl && (
              <Image src="https://placehold.co/600x400.png" alt="Imagem de placeholder para a pergunta" layout="fill" objectFit="cover" data-ai-hint={questionData.imageHint || "bible scene"} />
           )}
@@ -118,4 +128,3 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
     </Card>
   );
 }
-
