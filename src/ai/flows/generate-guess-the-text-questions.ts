@@ -14,15 +14,15 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import type { GuessTheTextQuestionType } from '@/types';
 
-// Esquema para a entrada da função
-export const GenerateGuessTheTextQuestionsInputSchema = z.object({
+// Esquema para a entrada da função (não exportado)
+const GenerateGuessTheTextQuestionsInputSchema = z.object({
   topic: z.string().describe('O tópico para os versículos (ex: "Amor", "Profecias Messiânicas", "Milagres de Jesus"). "Bíblia em geral" para aleatório.'),
   difficulty: z.enum(['fácil', 'médio', 'difícil']).describe('O nível de dificuldade das perguntas.'),
   numberOfQuestions: z.number().int().min(1).max(10).describe('O número de perguntas a serem geradas (máximo 10 para este modo).'),
 });
 export type GenerateGuessTheTextQuestionsInput = z.infer<typeof GenerateGuessTheTextQuestionsInputSchema>;
 
-// Esquema para cada pergunta individual gerada pela IA
+// Esquema para cada pergunta individual gerada pela IA (não exportado)
 const GuessTheTextQuestionInternalSchema = z.object({
   id: z.string().describe('Um identificador único para a pergunta (ex: gtt-q1-amor-facil).'),
   textSnippet: z.string().describe('Um trecho curto e significativo de um versículo bíblico em português (idealmente 5-15 palavras). Use a "Tradução do Novo Mundo das Escrituras Sagradas" se possível.'),
@@ -34,8 +34,8 @@ const GuessTheTextQuestionInternalSchema = z.object({
   imageHint: z.string().optional().describe('Uma ou duas palavras-chave EM INGLÊS para gerar uma imagem relacionada ao tema do versículo (ex: "dove peace", "heavenly city", "helping hand"). Máximo de duas palavras.'),
 });
 
-// Esquema para a saída da função (um array de perguntas)
-export const GenerateGuessTheTextQuestionsOutputSchema = z.object({
+// Esquema para a saída da função (um array de perguntas - não exportado)
+const GenerateGuessTheTextQuestionsOutputSchema = z.object({
   questions: z.array(GuessTheTextQuestionInternalSchema).describe('Um array de objetos de perguntas para o jogo "Qual é o Texto?".'),
 });
 export type GenerateGuessTheTextQuestionsOutput = z.infer<typeof GenerateGuessTheTextQuestionsOutputSchema>;
