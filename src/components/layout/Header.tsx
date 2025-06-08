@@ -2,14 +2,13 @@
 import Link from 'next/link';
 import { AppLogo } from '@/components/icons/AppLogo';
 import { Button } from '@/components/ui/button';
-import { Menu, Home, ListChecks, BookOpenText, Map } from 'lucide-react';
+import { Menu, Home, ListChecks, BookOpenText } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 const navItems = [
   { href: '/', label: 'Início', icon: <Home className="h-5 w-5" /> },
   { href: '/quiz', label: 'Quiz', icon: <ListChecks className="h-5 w-5" /> },
   { href: '/daily-verse', label: 'Versículo do Dia', icon: <BookOpenText className="h-5 w-5" /> },
-  { href: '/tours', label: 'Passeios Virtuais', icon: <Map className="h-5 w-5" /> },
 ];
 
 export function Header() {

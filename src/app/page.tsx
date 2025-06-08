@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { ListChecks, BookOpenText, Map, Award, HeartHandshake, Bird } from 'lucide-react';
+import { ListChecks, BookOpenText, Award, HeartHandshake, Bird } from 'lucide-react';
 import Image from 'next/image';
 
 const featureCards = [
@@ -19,13 +19,6 @@ const featureCards = [
     href: '/daily-verse',
     icon: <BookOpenText className="h-10 w-10 text-primary mb-4" />,
     cta: 'Ver Versículo',
-  },
-  {
-    title: 'Passeios Virtuais',
-    description: 'Explore reconstruções de locais bíblicos (Em Breve).',
-    href: '/tours',
-    icon: <Map className="h-10 w-10 text-primary mb-4" />,
-    cta: 'Explorar Passeios',
   },
    {
     title: 'Orações Personalizadas',
@@ -65,7 +58,7 @@ export default function HomePage() {
               </CardHeader>
               <CardContent className="flex flex-col flex-grow items-center text-center">
                 <CardDescription className="mb-6 text-base flex-grow">{card.description}</CardDescription>
-                <Button asChild variant={card.title === 'Passeios Virtuais' ? 'outline' : 'default'} className="w-full mt-auto">
+                <Button asChild variant={'default'} className="w-full mt-auto">
                   <Link href={card.href}>{card.cta}</Link>
                 </Button>
               </CardContent>
@@ -90,5 +83,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
