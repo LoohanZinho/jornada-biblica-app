@@ -2,28 +2,35 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { ListChecks, BookOpenText, Award, HeartHandshake, Bird } from 'lucide-react';
+import { ListChecks, BookOpenText, Award, HeartHandshake, Bird, FileText } from 'lucide-react'; // Adicionado FileText
 import Image from 'next/image';
 
 const featureCards = [
   {
-    title: 'Quiz Interativo',
-    description: 'Teste seu conhecimento com perguntas bíblicas envolventes.',
+    title: 'Quiz Bíblico Interativo',
+    description: 'Teste seu conhecimento com perguntas bíblicas envolventes e desafiadoras.',
     href: '/quiz',
     icon: <ListChecks className="h-10 w-10 text-primary mb-4" />,
     cta: 'Começar Quiz',
   },
   {
+    title: 'Qual é o Texto?',
+    description: 'Adivinhe a referência correta para trechos bíblicos e aprofunde seu conhecimento.',
+    href: '/guess-the-text', // Link para o novo jogo
+    icon: <FileText className="h-10 w-10 text-primary mb-4" />, // Ícone para o novo jogo
+    cta: 'Jogar Agora',
+  },
+  {
     title: 'Versículo do Dia',
-    description: 'Receba um novo versículo inspirador a cada dia para reflexão.',
+    description: 'Receba um novo versículo inspirador a cada dia para sua reflexão e meditação.',
     href: '/daily-verse',
     icon: <BookOpenText className="h-10 w-10 text-primary mb-4" />,
     cta: 'Ver Versículo',
   },
    {
     title: 'Orações Personalizadas',
-    description: 'Gere orações baseadas em sua jornada espiritual.',
-    href: '/quiz', 
+    description: 'Gere orações e reflexões baseadas em sua jornada espiritual e no seu desempenho.',
+    href: '/quiz/results', // Link para a página de resultados do quiz, onde a oração é gerada
     icon: <HeartHandshake className="h-10 w-10 text-primary mb-4" />,
     cta: 'Descobrir Orações',
   },

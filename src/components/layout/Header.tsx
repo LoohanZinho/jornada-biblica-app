@@ -2,12 +2,13 @@
 import Link from 'next/link';
 import { AppLogo } from '@/components/icons/AppLogo';
 import { Button } from '@/components/ui/button';
-import { Menu, Home, ListChecks, BookOpenText } from 'lucide-react';
+import { Menu, Home, ListChecks, BookOpenText, FileText } from 'lucide-react'; // Adicionado FileText
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 const navItems = [
   { href: '/', label: 'Início', icon: <Home className="h-5 w-5" /> },
-  { href: '/quiz', label: 'Quiz', icon: <ListChecks className="h-5 w-5" /> },
+  { href: '/quiz', label: 'Quiz Bíblico', icon: <ListChecks className="h-5 w-5" /> },
+  { href: '/guess-the-text', label: 'Qual é o Texto?', icon: <FileText className="h-5 w-5" /> }, // Novo jogo adicionado
   { href: '/daily-verse', label: 'Versículo do Dia', icon: <BookOpenText className="h-5 w-5" /> },
 ];
 
@@ -22,7 +23,7 @@ export function Header() {
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
           {navItems.map((item) => (
             <Link
-              key={item.href}
+              key={item.label} // Usar label como key se hrefs podem se repetir ou serem dinâmicos
               href={item.href}
               className="flex items-center gap-2 transition-colors hover:text-primary text-foreground/80"
             >
@@ -50,7 +51,7 @@ export function Header() {
               </SheetHeader>
               <nav className="flex flex-col space-y-1">
                 {navItems.map((item) => (
-                  <SheetClose asChild key={item.href}>
+                  <SheetClose asChild key={item.label}>
                     <Link
                       href={item.href}
                       className="flex items-center gap-3 rounded-md px-3 py-3 text-lg font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
