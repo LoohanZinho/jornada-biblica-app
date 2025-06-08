@@ -119,9 +119,8 @@ export default function TourDetailPage({ params }: TourDetailPageProps) {
           {tour.status === 'disponível' && (
             <div className="mt-8 p-4 bg-secondary/50 rounded-md text-center">
                 <Construction className="h-8 w-8 text-primary mx-auto mb-2"/>
-                <p className="font-semibold text-primary">Experiência Interativa em Desenvolvimento</p>
-                <p className="text-sm text-muted-foreground">
-                    Estamos trabalhando para trazer modelos 3D e reconstruções detalhadas para este passeio. Volte em breve!
+                <p className="text-md text-foreground/90">
+                    oque falta para completar isso?
                 </p>
             </div>
            )}
