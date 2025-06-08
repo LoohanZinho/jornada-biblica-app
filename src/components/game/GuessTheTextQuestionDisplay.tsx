@@ -8,8 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { generateImageFromQuestion } from '@/ai/flows/generate-image-from-question'; 
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { AlertCircle, CheckCircle2, FileText, XCircle, HelpCircle } from 'lucide-react'; // Importado HelpCircle
+import { AlertCircle, CheckCircle2, FileText, XCircle, Lightbulb } from 'lucide-react'; 
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface GuessTheTextQuestionDisplayProps {
   questionData: GuessTheTextQuestionType; 
@@ -25,12 +26,14 @@ export function GuessTheTextQuestionDisplay({ questionData, onAnswer, questionNu
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
+  const [showHint, setShowHint] = useState(false);
   
   const currentQuestionKeyRef = useRef<string | null>(null); 
   const isFetchingImageRef = useRef(false); 
 
   useEffect(() => {
     setShowCorrectAnimation(false); 
+    setShowHint(false); // Reset hint visibility on new question
 
     if (!questionData || !questionData.id || !questionData.textSnippet) {
         setImageUrl(null);
@@ -53,7 +56,6 @@ export function GuessTheTextQuestionDisplay({ questionData, onAnswer, questionNu
         isFetchingImageRef.current = false; 
     }
 
-    // Usar imageHint se disponível, senão um fallback baseado no snippet
     const imagePrompt = questionData.imageHint || `Imagem para o texto bíblico: "${questionData.textSnippet.substring(0, 50)}..."`;
 
     if (currentQuestionKeyRef.current === uniqueQuestionKey && !imageUrl && !isFetchingImageRef.current && !imageError) {
@@ -80,13 +82,10 @@ export function GuessTheTextQuestionDisplay({ questionData, onAnswer, questionNu
                  isFetchingImageRef.current = false; 
             });
     } else if (!isFetchingImageRef.current && !imageUrl && imageError) {
-      // Se já deu erro, não tenta buscar de novo para a mesma chave
       setImageLoading(false);
     } else if (!isFetchingImageRef.current && imageUrl) {
-      // Se já tem imagem, não precisa carregar
       setImageLoading(false);
     }
-
 
   }, [questionData, imageUrl, imageError]); 
 
@@ -108,15 +107,19 @@ export function GuessTheTextQuestionDisplay({ questionData, onAnswer, questionNu
     return '';
   };
 
+  const getHintText = () => {
+    if (questionData.topic && questionData.topic !== "Bíblia em geral") {
+      return `Dica: O tema deste versículo é "${questionData.topic}". Tente lembrar de passagens relacionadas a este tema.`;
+    }
+    return "Dica: Pense no contexto geral em que este tipo de mensagem apareceria. Qual livro ou autor poderia ter escrito isso?";
+  };
+
   return (
     <Card className={cn(
         "w-full shadow-lg animate-fade-in",
         showCorrectAnimation ? 'animate-correct-border-pulse' : ''
       )}>
       <CardHeader>
-        <div className="flex justify-center mb-3">
-          <HelpCircle className="h-10 w-10 text-primary" />
-        </div>
         <div className="flex justify-between items-center mb-2">
           <CardTitle className="text-2xl md:text-3xl font-headline">{`Desafio ${questionNumber}/${totalQuestions}`}</CardTitle>
            <span className="text-sm text-muted-foreground font-medium capitalize">{questionData.topic} - {questionData.difficulty}</span>
@@ -146,6 +149,24 @@ export function GuessTheTextQuestionDisplay({ questionData, onAnswer, questionNu
         </CardDescription>
         
         <p className="text-center text-muted-foreground mb-4">Qual é a referência correta para este trecho?</p>
+
+        <div className="mb-4 text-center">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowHint(!showHint)}
+            disabled={isAnswered}
+            aria-pressed={showHint}
+          >
+            <Lightbulb className="mr-2 h-4 w-4" />
+            {showHint ? "Ocultar Dica" : "Ver Dica"}
+          </Button>
+          {showHint && (
+            <Alert className="mt-2 text-left text-sm bg-secondary/50">
+              <AlertDescription>{getHintText()}</AlertDescription>
+            </Alert>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {questionData.options.map((option, index) => (

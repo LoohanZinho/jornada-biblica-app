@@ -8,8 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { generateImageFromQuestion } from '@/ai/flows/generate-image-from-question'; 
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { AlertCircle, CheckCircle2, XCircle, HelpCircle } from 'lucide-react'; // Importado HelpCircle
+import { AlertCircle, CheckCircle2, XCircle, Lightbulb } from 'lucide-react'; 
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface QuizQuestionDisplayProps {
   questionData: QuizQuestionType; 
@@ -25,12 +26,14 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
+  const [showHint, setShowHint] = useState(false);
   
   const currentQuestionKeyRef = useRef<string | null>(null); 
   const isFetchingImageRef = useRef(false); 
 
   useEffect(() => {
     setShowCorrectAnimation(false); 
+    setShowHint(false); // Reset hint visibility on new question
 
     if (!questionData || !questionData.id || !questionData.question) {
         setImageUrl(null);
@@ -58,7 +61,7 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
         setImageLoading(true); 
         setImageError(false); 
 
-        generateImageFromQuestion({ questionText: questionData.imageHint || questionData.question }) // Usa imageHint se disponível
+        generateImageFromQuestion({ questionText: questionData.imageHint || questionData.question }) 
             .then(response => {
                 if (currentQuestionKeyRef.current === uniqueQuestionKey) { 
                     setImageUrl(response.imageUrl);
@@ -103,9 +106,6 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
         showCorrectAnimation ? 'animate-correct-border-pulse' : ''
       )}>
       <CardHeader>
-        <div className="flex justify-center mb-3">
-          <HelpCircle className="h-10 w-10 text-primary" />
-        </div>
         <div className="flex justify-between items-center mb-2">
           <CardTitle className="text-2xl md:text-3xl font-headline">{`Pergunta ${questionNumber}/${totalQuestions}`}</CardTitle>
           <span className="text-sm text-muted-foreground font-medium capitalize">{questionData.topic} - {questionData.difficulty}</span>
@@ -132,6 +132,29 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
         <CardDescription className="text-lg md:text-xl font-body min-h-[3em] text-left mb-6">
             {questionData.question}
         </CardDescription>
+
+        <div className="mb-4 text-center">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowHint(!showHint)} 
+            disabled={isAnswered || !questionData.explanationContext}
+            aria-pressed={showHint}
+          >
+            <Lightbulb className="mr-2 h-4 w-4" />
+            {showHint ? "Ocultar Dica" : "Ver Dica"}
+          </Button>
+          {showHint && questionData.explanationContext && (
+            <Alert className="mt-2 text-left text-sm bg-secondary/50">
+              <AlertDescription>{questionData.explanationContext}</AlertDescription>
+            </Alert>
+          )}
+          {showHint && !questionData.explanationContext && (
+            <Alert variant="destructive" className="mt-2 text-left text-sm">
+              <AlertDescription>Nenhuma dica específica disponível para esta pergunta.</AlertDescription>
+            </Alert>
+          )}
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {questionData.options.map((option, index) => (
