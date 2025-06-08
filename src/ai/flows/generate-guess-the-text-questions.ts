@@ -11,7 +11,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z}from 'genkit';
 import type { GuessTheTextQuestionType } from '@/types';
 
 // Esquema para a entrada da função (não exportado)
@@ -89,31 +89,30 @@ const generateGuessTheTextQuestionsFlow = ai.defineFlow(
     outputSchema: GenerateGuessTheTextQuestionsOutputSchema,
   },
   async (input: GenerateGuessTheTextQuestionsInput): Promise<GenerateGuessTheTextQuestionsOutput> => {
-    let {output: aiOutput} = await prompt(input);
+    const {output: aiOutput} = await prompt(input);
 
-    if (
-      !aiOutput ||
-      !aiOutput.questions ||
-      !Array.isArray(aiOutput.questions) ||
-      (input.numberOfQuestions > 0 && aiOutput.questions.length === 0)
-    ) {
-      // Se 0 perguntas foram solicitadas e a IA retornou 0 (ou nada), isso é aceitável.
-      if (input.numberOfQuestions === 0 && (!aiOutput || !aiOutput.questions || aiOutput.questions.length === 0)) {
-         if (!aiOutput) aiOutput = { questions: [] };
-         else if (!aiOutput.questions) aiOutput.questions = [];
-      } else {
-        // Caso contrário, se perguntas eram esperadas mas não foram retornadas, é um erro.
-        throw new Error(
-          'Falha ao gerar perguntas "Qual é o Texto?": a IA não retornou um array de perguntas válido ou retornou uma lista vazia quando perguntas eram esperadas.'
-        );
-      }
+    if (!aiOutput || !aiOutput.questions || !Array.isArray(aiOutput.questions)) {
+      // Lida com casos onde a estrutura básica da resposta da IA está ausente ou incorreta.
+      throw new Error(
+        'A IA não retornou uma estrutura de resposta válida (objeto esperado com uma propriedade "questions" do tipo array).'
+      );
+    }
+
+    // Como input.numberOfQuestions é sempre > 0 devido ao schema,
+    // uma lista vazia de perguntas significa uma falha da IA em gerar o conteúdo solicitado.
+    if (aiOutput.questions.length === 0) {
+      throw new Error(
+        'A IA retornou uma lista de perguntas vazia, embora perguntas fossem esperadas.'
+      );
     }
     
-    // Validação e normalização básica
+    // Validação e normalização básica para cada pergunta
     const processedQuestions: GuessTheTextQuestionType[] = aiOutput.questions.map((q, index) => {
       if (!q.id || !q.textSnippet || !q.options || q.options.length !== 4 || !q.correctAnswer || !q.fullText || !q.topic || !q.difficulty) {
-        console.warn("Pergunta 'Qual é o Texto?' da IA incompleta ou malformada:", q);
-        // Fallback para evitar quebrar o jogo, mas a IA deve ser robusta
+        console.warn("Pergunta 'Qual é o Texto?' da IA incompleta ou malformada no índice:", index, q);
+        // Cria um objeto de fallback para evitar quebrar o jogo, mas idealmente a IA deve ser robusta.
+        // Este fallback ainda pode ser problemático se campos essenciais estiverem faltando.
+        // Considerar lançar um erro aqui também se a validação estrita for necessária.
         return {
           id: q.id || `invalid-gtt-q${index + 1}-${Date.now()}`,
           textSnippet: q.textSnippet || "Trecho inválido.",
@@ -126,13 +125,17 @@ const generateGuessTheTextQuestionsFlow = ai.defineFlow(
         };
       }
       if (!q.options.includes(q.correctAnswer)) {
-        console.warn("Resposta correta não está nas opções para a pergunta:", q.id);
-        // Tenta corrigir, ou marca como inválida/usa a primeira opção
-        return { ...q, correctAnswer: q.options[0] }; // Simples fallback
+        console.warn("Resposta correta não está nas opções para a pergunta:", q.id, "Usando a primeira opção como fallback.");
+        return { ...q, correctAnswer: q.options[0] }; 
       }
       return q as GuessTheTextQuestionType;
     });
     
+    // Se após o processamento, por algum motivo todas as perguntas se tornaram inválidas e foram filtradas
+    // (embora o map atual não filtre, mas substitua), podemos adicionar um check final.
+    // No entanto, o map atual sempre retorna um objeto, então processedQuestions terá o mesmo tamanho de aiOutput.questions.
+    // A verificação principal é se aiOutput.questions estava vazio em primeiro lugar.
+
     return { questions: processedQuestions };
   }
 );
