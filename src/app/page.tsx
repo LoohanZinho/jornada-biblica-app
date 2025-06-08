@@ -30,7 +30,7 @@ const featureCards = [
    {
     title: 'Orações Personalizadas',
     description: 'Gere orações e reflexões baseadas em sua jornada espiritual e no seu desempenho.',
-    href: '/quiz/results', // Idealmente, esta página teria uma forma de ser acessada sem ter feito um quiz antes, ou o quiz result deveria permitir gerar oração sem desempenho
+    href: '/quiz/results', 
     icon: <HeartHandshake className="h-10 w-10 text-primary mb-4" />,
     cta: 'Descobrir Orações',
   },
@@ -76,7 +76,7 @@ export default function HomePage() {
 
       <section className="w-full py-12 text-center">
          <Image
-            src="/img/biblia.png"
+            src="https://imgur.com/b6662887-9a17-4390-ab58-ce64274f4ca2"
             alt="Bíblia aberta sobre uma mesa de madeira rústica, com luz solar suave vindo de uma janela ao fundo."
             width={800}
             height={300}
