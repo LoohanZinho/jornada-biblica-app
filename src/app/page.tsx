@@ -77,11 +77,11 @@ export default function HomePage() {
       <section className="w-full py-12 text-center">
          <Image
             src="https://placehold.co/800x300.png"
-            alt="Manuscrito Antigo"
+            alt="Bíblia aberta sobre mesa rústica com luz suave, evocando estudo e descoberta"
             width={800}
             height={300}
             className="rounded-lg shadow-lg mx-auto"
-            data-ai-hint="ancient scroll"
+            data-ai-hint="bible study"
           />
           <p className="text-md text-muted-foreground mt-6 max-w-xl mx-auto">
             "Lâmpada para os meus pés é tua palavra e, luz para o meu caminho." - Salmos 119:105
