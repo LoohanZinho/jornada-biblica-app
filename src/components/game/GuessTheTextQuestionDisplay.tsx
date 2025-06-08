@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { generateImageFromQuestion } from '@/ai/flows/generate-image-from-question'; 
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { AlertCircle, CheckCircle2, FileText, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, FileText, XCircle, HelpCircle } from 'lucide-react'; // Importado HelpCircle
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
 
 interface GuessTheTextQuestionDisplayProps {
@@ -114,6 +114,9 @@ export function GuessTheTextQuestionDisplay({ questionData, onAnswer, questionNu
         showCorrectAnimation ? 'animate-correct-border-pulse' : ''
       )}>
       <CardHeader>
+        <div className="flex justify-center mb-3">
+          <HelpCircle className="h-10 w-10 text-primary" />
+        </div>
         <div className="flex justify-between items-center mb-2">
           <CardTitle className="text-2xl md:text-3xl font-headline">{`Desafio ${questionNumber}/${totalQuestions}`}</CardTitle>
            <span className="text-sm text-muted-foreground font-medium capitalize">{questionData.topic} - {questionData.difficulty}</span>
