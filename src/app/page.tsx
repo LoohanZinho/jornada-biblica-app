@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { ListChecks, BookOpenText, Award, HeartHandshake, Bird, FileText } from 'lucide-react'; // Adicionado FileText
+import { ListChecks, BookOpenText, Award, HeartHandshake, Bird, MessageSquareQuote } from 'lucide-react'; // Alterado FileText para MessageSquareQuote
 import Image from 'next/image';
 
 const featureCards = [
@@ -16,8 +16,8 @@ const featureCards = [
   {
     title: 'Qual é o Texto?',
     description: 'Adivinhe a referência correta para trechos bíblicos e aprofunde seu conhecimento.',
-    href: '/guess-the-text', // Link para o novo jogo
-    icon: <FileText className="h-10 w-10 text-primary mb-4" />, // Ícone para o novo jogo
+    href: '/guess-the-text',
+    icon: <MessageSquareQuote className="h-10 w-10 text-primary mb-4" />, // Ícone atualizado
     cta: 'Jogar Agora',
   },
   {
@@ -30,7 +30,7 @@ const featureCards = [
    {
     title: 'Orações Personalizadas',
     description: 'Gere orações e reflexões baseadas em sua jornada espiritual e no seu desempenho.',
-    href: '/quiz/results', // Link para a página de resultados do quiz, onde a oração é gerada
+    href: '/quiz/results',
     icon: <HeartHandshake className="h-10 w-10 text-primary mb-4" />,
     cta: 'Descobrir Orações',
   },

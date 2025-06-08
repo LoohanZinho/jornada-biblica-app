@@ -2,13 +2,13 @@
 import Link from 'next/link';
 import { AppLogo } from '@/components/icons/AppLogo';
 import { Button } from '@/components/ui/button';
-import { Menu, Home, ListChecks, BookOpenText, FileText } from 'lucide-react'; // Adicionado FileText
+import { Menu, Home, ListChecks, BookOpenText, MessageSquareQuote } from 'lucide-react'; // Alterado FileText para MessageSquareQuote
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 const navItems = [
   { href: '/', label: 'Início', icon: <Home className="h-5 w-5" /> },
   { href: '/quiz', label: 'Quiz Bíblico', icon: <ListChecks className="h-5 w-5" /> },
-  { href: '/guess-the-text', label: 'Qual é o Texto?', icon: <FileText className="h-5 w-5" /> }, // Novo jogo adicionado
+  { href: '/guess-the-text', label: 'Qual é o Texto?', icon: <MessageSquareQuote className="h-5 w-5" /> }, // Ícone atualizado
   { href: '/daily-verse', label: 'Versículo do Dia', icon: <BookOpenText className="h-5 w-5" /> },
 ];
 
@@ -23,7 +23,7 @@ export function Header() {
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
           {navItems.map((item) => (
             <Link
-              key={item.label} // Usar label como key se hrefs podem se repetir ou serem dinâmicos
+              key={item.label}
               href={item.href}
               className="flex items-center gap-2 transition-colors hover:text-primary text-foreground/80"
             >
