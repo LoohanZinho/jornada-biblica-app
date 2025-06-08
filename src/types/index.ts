@@ -36,3 +36,17 @@ export interface ExplainAnswerOutput {
   bibleVerseReference: string;
   bibleVerseText: string;
 }
+
+export interface VirtualTourType {
+  id: string;
+  slug: string;
+  title: string;
+  shortDescription: string;
+  longDescription: string;
+  imagePlaceholderUrl: string;
+  imageHint: string;
+  status: "disponível" | "em breve";
+  mainAttractions?: string[];
+  historicalContext?: string;
+  relatedScriptures?: string[];
+}
