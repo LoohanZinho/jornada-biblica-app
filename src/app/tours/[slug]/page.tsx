@@ -1,5 +1,5 @@
 
-import { getTourBySlug } from '@/lib/toursData';
+import { getTourBySlug, virtualToursData } from '@/lib/toursData';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
