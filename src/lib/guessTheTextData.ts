@@ -1,0 +1,55 @@
+
+import type { GuessTheTextQuestionType } from '@/types';
+
+export const sampleGuessTheTextQuestions: GuessTheTextQuestionType[] = [
+  {
+    id: 'gtt-sample-1',
+    textSnippet: 'No princípio Deus criou os céus e a terra.',
+    options: ['Gênesis 1:1', 'Êxodo 3:14', 'Salmos 1:1', 'João 1:1'],
+    correctAnswer: 'Gênesis 1:1',
+    fullText: 'No princípio Deus criou os céus e a terra. A terra era sem forma e vazia; havia trevas sobre a face do abismo, e o Espírito de Deus pairava sobre as águas.',
+    topic: 'Criação',
+    difficulty: 'fácil',
+    imageHint: 'creation light',
+  },
+  {
+    id: 'gtt-sample-2',
+    textSnippet: 'O Senhor é o meu pastor; nada me faltará.',
+    options: ['Salmos 23:1', 'Provérbios 3:5', 'Isaías 40:31', 'Mateus 6:33'],
+    correctAnswer: 'Salmos 23:1',
+    fullText: 'O Senhor é o meu pastor; nada me faltará. Ele me faz repousar em pastos verdejantes. Leva-me para junto das águas de descanso;',
+    topic: 'Confiança',
+    difficulty: 'fácil',
+    imageHint: 'shepherd sheep',
+  },
+  {
+    id: 'gtt-sample-3',
+    textSnippet: 'porque todos pecaram e carecem da glória de Deus,',
+    options: ['Romanos 3:23', 'Romanos 5:8', 'Romanos 6:23', 'Efésios 2:8'],
+    correctAnswer: 'Romanos 3:23',
+    fullText: 'porque todos pecaram e carecem da glória de Deus, sendo justificados gratuitamente, por sua graça, mediante a redenção que há em Cristo Jesus,',
+    topic: 'Salvação',
+    difficulty: 'médio',
+    imageHint: 'grace cross',
+  },
+  {
+    id: 'gtt-sample-4',
+    textSnippet: 'Disse-lhe Jesus: Eu sou o caminho, e a verdade, e a vida.',
+    options: ['João 14:6', 'João 1:14', 'Atos 4:12', '1 Timóteo 2:5'],
+    correctAnswer: 'João 14:6',
+    fullText: 'Disse-lhe Jesus: Eu sou o caminho, e a verdade, e a vida; ninguém vem ao Pai senão por mim.',
+    topic: 'Jesus Cristo',
+    difficulty: 'médio',
+    imageHint: 'jesus light path',
+  },
+   {
+    id: 'gtt-sample-5',
+    textSnippet: 'Mas buscai primeiro o seu reino e a sua justiça,',
+    options: ['Mateus 6:25', 'Mateus 6:33', 'Lucas 12:31', 'Filipenses 4:6'],
+    correctAnswer: 'Mateus 6:33',
+    fullText: 'Mas buscai primeiro o seu reino e a sua justiça, e todas estas coisas vos serão acrescentadas.',
+    topic: 'Prioridades',
+    difficulty: 'difícil',
+    imageHint: 'kingdom seek',
+  },
+];
