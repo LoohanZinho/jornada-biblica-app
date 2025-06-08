@@ -27,6 +27,12 @@ const nextConfig: NextConfig = {
         hostname: 'i.imgur.com', // Adicionado i.imgur.com para links diretos comuns
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.postimg.cc', // Adicionado i.postimg.cc
+        port: '',
+        pathname: '/**',
       }
     ],
   },

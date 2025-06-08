@@ -76,12 +76,13 @@ export default function HomePage() {
 
       <section className="w-full py-12 text-center">
          <Image
-            src="https://imgur.com/b6662887-9a17-4390-ab58-ce64274f4ca2"
+            src="https://i.postimg.cc/G2wp7FCt/biblia.png"
             alt="Bíblia aberta sobre uma mesa de madeira rústica, com luz solar suave vindo de uma janela ao fundo."
             width={800}
             height={300}
             className="rounded-lg shadow-lg mx-auto"
             data-ai-hint="open bible"
+            priority
           />
           <p className="text-md text-muted-foreground mt-6 max-w-xl mx-auto">
             "Lâmpada para os meus pés é tua palavra e, luz para o meu caminho." - Salmos 119:105
