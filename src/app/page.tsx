@@ -76,7 +76,7 @@ export default function HomePage() {
 
       <section className="w-full py-12 text-center">
          <Image
-            src="https://placehold.co/800x300.png"
+            src="/img/biblia.png"
             alt="Bíblia aberta sobre uma mesa de madeira rústica, com luz solar suave vindo de uma janela ao fundo."
             width={800}
             height={300}
