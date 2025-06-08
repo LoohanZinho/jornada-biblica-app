@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { ListChecks, BookOpenText, Award, HeartHandshake, Bird, MessageSquareQuote } from 'lucide-react'; // Alterado FileText para MessageSquareQuote
+import { ListChecks, BookOpenText, Award, HeartHandshake, Bird, MessageSquareQuote } from 'lucide-react';
 import Image from 'next/image';
 
 const featureCards = [
@@ -17,7 +17,7 @@ const featureCards = [
     title: 'Qual é o Texto?',
     description: 'Adivinhe a referência correta para trechos bíblicos e aprofunde seu conhecimento.',
     href: '/guess-the-text',
-    icon: <MessageSquareQuote className="h-10 w-10 text-primary mb-4" />, // Ícone atualizado
+    icon: <MessageSquareQuote className="h-10 w-10 text-primary mb-4" />,
     cta: 'Jogar Agora',
   },
   {
@@ -30,7 +30,7 @@ const featureCards = [
    {
     title: 'Orações Personalizadas',
     description: 'Gere orações e reflexões baseadas em sua jornada espiritual e no seu desempenho.',
-    href: '/quiz/results',
+    href: '/quiz/results', // Idealmente, esta página teria uma forma de ser acessada sem ter feito um quiz antes, ou o quiz result deveria permitir gerar oração sem desempenho
     icon: <HeartHandshake className="h-10 w-10 text-primary mb-4" />,
     cta: 'Descobrir Orações',
   },
