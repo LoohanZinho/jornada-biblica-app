@@ -89,12 +89,26 @@ const generateGuessTheTextQuestionsFlow = ai.defineFlow(
     outputSchema: GenerateGuessTheTextQuestionsOutputSchema,
   },
   async (input: GenerateGuessTheTextQuestionsInput): Promise<GenerateGuessTheTextQuestionsOutput> => {
-    const {output: aiOutput} = await prompt(input);
+    let {output: aiOutput} = await prompt(input);
 
-    if (!aiOutput || !aiOutput.questions || !Array.isArray(aiOutput.questions)) {
-      throw new Error('Falha ao gerar perguntas "Qual é o Texto?": a IA não retornou um array de perguntas válido.');
+    if (
+      !aiOutput ||
+      !aiOutput.questions ||
+      !Array.isArray(aiOutput.questions) ||
+      (input.numberOfQuestions > 0 && aiOutput.questions.length === 0)
+    ) {
+      // Se 0 perguntas foram solicitadas e a IA retornou 0 (ou nada), isso é aceitável.
+      if (input.numberOfQuestions === 0 && (!aiOutput || !aiOutput.questions || aiOutput.questions.length === 0)) {
+         if (!aiOutput) aiOutput = { questions: [] };
+         else if (!aiOutput.questions) aiOutput.questions = [];
+      } else {
+        // Caso contrário, se perguntas eram esperadas mas não foram retornadas, é um erro.
+        throw new Error(
+          'Falha ao gerar perguntas "Qual é o Texto?": a IA não retornou um array de perguntas válido ou retornou uma lista vazia quando perguntas eram esperadas.'
+        );
+      }
     }
-
+    
     // Validação e normalização básica
     const processedQuestions: GuessTheTextQuestionType[] = aiOutput.questions.map((q, index) => {
       if (!q.id || !q.textSnippet || !q.options || q.options.length !== 4 || !q.correctAnswer || !q.fullText || !q.topic || !q.difficulty) {
@@ -122,3 +136,4 @@ const generateGuessTheTextQuestionsFlow = ai.defineFlow(
     return { questions: processedQuestions };
   }
 );
+
