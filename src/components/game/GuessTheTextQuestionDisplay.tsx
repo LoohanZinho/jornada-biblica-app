@@ -5,15 +5,15 @@ import type { GuessTheTextQuestionType } from '@/types';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { generateImageFromQuestion } from '@/ai/flows/generate-image-from-question'; 
+import { generateImageFromQuestion } from '@/ai/flows/generate-image-from-question';
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { AlertCircle, CheckCircle2, FileText, XCircle, Lightbulb } from 'lucide-react'; 
+import { AlertCircle, CheckCircle2, FileText, XCircle, Lightbulb } from 'lucide-react';
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface GuessTheTextQuestionDisplayProps {
-  questionData: GuessTheTextQuestionType; 
+  questionData: GuessTheTextQuestionType;
   onAnswer: (answer: string, isCorrect: boolean) => void;
   questionNumber: number;
   totalQuestions: number;
@@ -27,12 +27,12 @@ export function GuessTheTextQuestionDisplay({ questionData, onAnswer, questionNu
   const [imageError, setImageError] = useState(false);
   const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
   const [showHint, setShowHint] = useState(false);
-  
-  const currentQuestionKeyRef = useRef<string | null>(null); 
-  const isFetchingImageRef = useRef(false); 
+
+  const currentQuestionKeyRef = useRef<string | null>(null);
+  const isFetchingImageRef = useRef(false);
 
   useEffect(() => {
-    setShowCorrectAnimation(false); 
+    setShowCorrectAnimation(false);
     setShowHint(false); // Reset hint visibility on new question
 
     if (!questionData || !questionData.id || !questionData.textSnippet) {
@@ -51,35 +51,35 @@ export function GuessTheTextQuestionDisplay({ questionData, onAnswer, questionNu
         setSelectedAnswer(null);
         setIsAnswered(false);
         setImageUrl(null);
-        setImageLoading(true); 
+        setImageLoading(true);
         setImageError(false);
-        isFetchingImageRef.current = false; 
+        isFetchingImageRef.current = false;
     }
 
     const imagePrompt = questionData.imageHint || `Imagem para o texto bíblico: "${questionData.textSnippet.substring(0, 50)}..."`;
 
     if (currentQuestionKeyRef.current === uniqueQuestionKey && !imageUrl && !isFetchingImageRef.current && !imageError) {
         isFetchingImageRef.current = true;
-        setImageLoading(true); 
-        setImageError(false); 
+        setImageLoading(true);
+        setImageError(false);
 
         generateImageFromQuestion({ questionText: imagePrompt })
             .then(response => {
-                if (currentQuestionKeyRef.current === uniqueQuestionKey) { 
+                if (currentQuestionKeyRef.current === uniqueQuestionKey) {
                     setImageUrl(response.imageUrl);
                 }
             })
             .catch(err => {
                 console.error("Erro ao gerar imagem para 'Qual é o Texto?':", err);
-                if (currentQuestionKeyRef.current === uniqueQuestionKey) { 
+                if (currentQuestionKeyRef.current === uniqueQuestionKey) {
                     setImageError(true);
                 }
             })
             .finally(() => {
-                 if (currentQuestionKeyRef.current === uniqueQuestionKey) { 
+                 if (currentQuestionKeyRef.current === uniqueQuestionKey) {
                     setImageLoading(false);
                  }
-                 isFetchingImageRef.current = false; 
+                 isFetchingImageRef.current = false;
             });
     } else if (!isFetchingImageRef.current && !imageUrl && imageError) {
       setImageLoading(false);
@@ -87,7 +87,7 @@ export function GuessTheTextQuestionDisplay({ questionData, onAnswer, questionNu
       setImageLoading(false);
     }
 
-  }, [questionData, imageUrl, imageError]); 
+  }, [questionData, imageUrl, imageError]);
 
   const handleOptionClick = (option: string) => {
     if (isAnswered) return;
@@ -138,22 +138,22 @@ export function GuessTheTextQuestionDisplay({ questionData, onAnswer, questionNu
           {!imageLoading && !imageError && imageUrl && (
             <Image src={imageUrl} alt={`Ilustração para: ${questionData.textSnippet}`} layout="fill" objectFit="cover" data-ai-hint={questionData.imageHint || "bible passage"} />
           )}
-          {!imageLoading && !imageError && !imageUrl && ( 
+          {!imageLoading && !imageError && !imageUrl && (
              <Image src={`https://placehold.co/600x400.png`} alt="Ilustração para o desafio" layout="fill" objectFit="cover" data-ai-hint={questionData.imageHint || "bible passage"} />
           )}
         </div>
-        
+
         <CardDescription className="text-lg md:text-xl font-body min-h-[3em] text-center mb-6 p-4 bg-secondary/30 rounded-md">
             <FileText className="inline-block h-5 w-5 mr-2 align-middle text-primary" />
             <span className="italic">&ldquo;{questionData.textSnippet}&rdquo;</span>
         </CardDescription>
-        
+
         <p className="text-center text-muted-foreground mb-4">Qual é a referência correta para este trecho?</p>
 
         <div className="mb-4 text-center">
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setShowHint(!showHint)}
             disabled={isAnswered}
             aria-pressed={showHint}
@@ -172,7 +172,7 @@ export function GuessTheTextQuestionDisplay({ questionData, onAnswer, questionNu
           {questionData.options.map((option, index) => (
             <Button
               key={index}
-              variant="outline" 
+              variant="outline"
               className={cn(
                 "w-full h-auto py-3 text-base justify-start text-left whitespace-normal transition-all duration-300 ease-in-out transform hover:scale-105",
                 getButtonClass(option)
@@ -192,3 +192,5 @@ export function GuessTheTextQuestionDisplay({ questionData, onAnswer, questionNu
     </Card>
   );
 }
+
+    
