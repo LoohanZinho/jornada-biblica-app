@@ -10,7 +10,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { AlertCircle, CheckCircle2, MessageCircleQuestion, XCircle, Lightbulb, UserCheck } from 'lucide-react';
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription as UIDialogAlertDescription } from "@/components/ui/alert"; // Renomeado para evitar conflito
 
 interface WhoSaidThisQuestionDisplayProps {
   questionData: WhoSaidThisQuestionType;
@@ -20,7 +20,7 @@ interface WhoSaidThisQuestionDisplayProps {
 }
 
 export function WhoSaidThisQuestionDisplay({ questionData, onAnswer, questionNumber, totalQuestions }: WhoSaidThisQuestionDisplayProps) {
-  const [selectedCharacter, setSelectedCharacter] = useState<string | null>(null);
+  const [selectedCharacterByUser, setSelectedCharacterByUser] = useState<string | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
@@ -48,7 +48,7 @@ export function WhoSaidThisQuestionDisplay({ questionData, onAnswer, questionNum
 
     if (currentQuestionKeyRef.current !== uniqueQuestionKey) {
         currentQuestionKeyRef.current = uniqueQuestionKey;
-        setSelectedCharacter(null);
+        setSelectedCharacterByUser(null);
         setIsAnswered(false);
         setImageUrl(null);
         setImageLoading(true);
@@ -89,21 +89,29 @@ export function WhoSaidThisQuestionDisplay({ questionData, onAnswer, questionNum
 
   }, [questionData, imageUrl, imageError]);
 
-  const handleOptionClick = (option: string) => {
+  const handleOptionClick = (characterClicked: string) => {
     if (isAnswered) return;
-    setSelectedCharacter(option);
+    setSelectedCharacterByUser(characterClicked);
     setIsAnswered(true);
-    const isCorrect = option === questionData.correctCharacter;
-    if (isCorrect) {
+    
+    const isChoiceCorrect = characterClicked.trim() === questionData.correctCharacter.trim();
+
+    if (isChoiceCorrect) {
       setShowCorrectAnimation(true);
     }
-    onAnswer(option, isCorrect);
+    onAnswer(characterClicked, isChoiceCorrect);
   };
 
-  const getButtonClass = (option: string) => {
+  const getButtonClass = (buttonCharacterOption: string) => {
     if (!isAnswered) return '';
-    if (option === questionData.correctCharacter) return 'bg-green-500 hover:bg-green-600 text-white border-green-500';
-    if (option === selectedCharacter && option !== questionData.correctCharacter) return 'bg-red-500 hover:bg-red-600 text-white border-red-500';
+    // Se a opção DESTE BOTÃO é a resposta correta, fica verde
+    if (buttonCharacterOption.trim() === questionData.correctCharacter.trim()) {
+      return 'bg-green-500 hover:bg-green-600 text-white border-green-500';
+    }
+    // Se a opção DESTE BOTÃO foi a SELECIONADA PELO USUÁRIO e NÃO é a correta, fica vermelha
+    if (buttonCharacterOption === selectedCharacterByUser && buttonCharacterOption.trim() !== questionData.correctCharacter.trim()) {
+      return 'bg-red-500 hover:bg-red-600 text-white border-red-500';
+    }
     return '';
   };
   
@@ -167,28 +175,28 @@ export function WhoSaidThisQuestionDisplay({ questionData, onAnswer, questionNum
           </Button>
           {showHint && (
             <Alert className="mt-2 text-left text-sm bg-secondary/50">
-              <AlertDescription>{getHintText()}</AlertDescription>
+              <UIDialogAlertDescription>{getHintText()}</UIDialogAlertDescription>
             </Alert>
           )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {questionData.options.map((option, index) => (
+          {questionData.options.map((optionText, index) => ( // optionText é o nome do personagem nesta opção
             <Button
               key={index}
               variant="outline"
               className={cn(
                 "w-full h-auto py-3 text-base justify-start text-left whitespace-normal transition-all duration-300 ease-in-out transform hover:scale-105",
-                getButtonClass(option)
+                getButtonClass(optionText)
               )}
-              onClick={() => handleOptionClick(option)}
-              disabled={isAnswered && selectedCharacter !== option && option !== questionData.correctCharacter}
-              aria-pressed={selectedCharacter === option}
+              onClick={() => handleOptionClick(optionText)}
+              disabled={isAnswered && selectedCharacterByUser !== optionText && optionText.trim() !== questionData.correctCharacter.trim()}
+              aria-pressed={selectedCharacterByUser === optionText}
             >
               <UserCheck className="mr-3 h-5 w-5 text-primary/80" />
-              {option}
-              {isAnswered && option === questionData.correctCharacter && <CheckCircle2 className="ml-auto h-5 w-5 text-white" />}
-              {isAnswered && selectedCharacter === option && option !== questionData.correctCharacter && <XCircle className="ml-auto h-5 w-5 text-white" />}
+              {optionText}
+              {isAnswered && optionText.trim() === questionData.correctCharacter.trim() && <CheckCircle2 className="ml-auto h-5 w-5 text-white" />}
+              {isAnswered && selectedCharacterByUser === optionText && optionText.trim() !== questionData.correctCharacter.trim() && <XCircle className="ml-auto h-5 w-5 text-white" />}
             </Button>
           ))}
         </div>

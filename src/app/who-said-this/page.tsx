@@ -11,18 +11,18 @@ import { WhoSaidThisQuestionDisplay } from '@/components/game/WhoSaidThisQuestio
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, RotateCcw, BookOpenCheck, QuoteIcon } from 'lucide-react';
+import { ArrowRight, RotateCcw, BookOpenCheck, QuoteIcon, CheckCircle2, XCircle } from 'lucide-react';
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface CurrentQuoteResolutionData {
   quote: string;
-  selectedCharacter: string;
-  correctCharacter: string;
+  selectedCharacter: string; // O que o usuário selecionou
+  correctCharacter: string; // O que é o correto
   referenceForExplanation: string;
   contextForExplanation: string;
-  isCorrect: boolean;
+  isCorrect: boolean; // Se a seleção do usuário foi correta
 }
 
 export default function WhoSaidThisPage() {
@@ -132,28 +132,29 @@ export default function WhoSaidThisPage() {
     }
   }, [toast]);
 
-  const handleAnswer = (selectedCharacter: string, isCorrect: boolean) => {
-    if (isCorrect) {
+  const handleAnswer = (characterUserSelected: string, wasUserCorrect: boolean) => {
+    if (wasUserCorrect) {
       setScore(prev => prev + 1);
     }
 
-    const currentQ = questions[currentQuestionIndex];
-    const resultData: WhoSaidThisResultType = {
-      quote: currentQ.quote,
-      selectedCharacter,
-      correctCharacter: currentQ.correctCharacter,
-      isCorrect,
-      reference: currentQ.referenceForExplanation,
+    const currentQuestion = questions[currentQuestionIndex];
+
+    const resultEntry: WhoSaidThisResultType = {
+      quote: currentQuestion.quote,
+      selectedCharacter: characterUserSelected,
+      correctCharacter: currentQuestion.correctCharacter,
+      isCorrect: wasUserCorrect,
+      reference: currentQuestion.referenceForExplanation,
     };
-    setGameResults(prev => [...prev, resultData]);
+    setGameResults(prev => [...prev, resultEntry]);
     
     setCurrentQuoteResolutionData({
-      quote: currentQ.quote,
-      selectedCharacter,
-      correctCharacter: currentQ.correctCharacter,
-      referenceForExplanation: currentQ.referenceForExplanation,
-      contextForExplanation: currentQ.contextForExplanation,
-      isCorrect,
+      quote: currentQuestion.quote,
+      selectedCharacter: characterUserSelected,
+      correctCharacter: currentQuestion.correctCharacter,
+      referenceForExplanation: currentQuestion.referenceForExplanation,
+      contextForExplanation: currentQuestion.contextForExplanation,
+      isCorrect: wasUserCorrect,
     });
     setShowQuoteResolutionCard(true); 
   };
@@ -164,7 +165,6 @@ export default function WhoSaidThisPage() {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
-      // Navigate to results page (to be created)
       localStorage.setItem('whoSaidThisResults', JSON.stringify({ score, totalQuestions: questions.length, results: gameResults, topic: settings?.topic || 'Conhecimento Geral' }));
       router.push(`/who-said-this/results`);
     }
@@ -231,12 +231,20 @@ export default function WhoSaidThisPage() {
       {showQuoteResolutionCard && currentQuoteResolutionData && (
         <Card className="w-full shadow-lg animate-fade-in">
           <CardHeader className="text-center">
-            <BookOpenCheck className="h-12 w-12 text-primary mx-auto mb-3" />
+             {currentQuoteResolutionData.isCorrect ? 
+                <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-3" /> : 
+                <XCircle className="h-12 w-12 text-red-500 mx-auto mb-3" />
+             }
             <CardTitle className="text-2xl font-headline">
-              {currentQuoteResolutionData.isCorrect ? "Você Acertou!" : "Resposta Correta"}
+              {currentQuoteResolutionData.isCorrect ? "Você Acertou!" : "Ops, não foi dessa vez!"}
             </CardTitle>
-            <CardDescription>
-              A citação foi dita por: <span className="font-semibold text-primary">{currentQuoteResolutionData.correctCharacter}</span>
+            <CardDescription className="space-y-1">
+              <span>A citação foi dita por: <span className="font-semibold text-primary">{currentQuoteResolutionData.correctCharacter}</span>.</span>
+              {!currentQuoteResolutionData.isCorrect && (
+                <span className="block text-sm text-destructive">
+                  Sua resposta: {currentQuoteResolutionData.selectedCharacter}
+                </span>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
