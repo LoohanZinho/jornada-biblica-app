@@ -26,6 +26,7 @@ export default function QuizPage() {
   const [showExplanation, setShowExplanation] = useState(false);
   const [explanationData, setExplanationData] = useState<{ question: string; userAnswer: string; correctAnswer: string; explanationContext?: string; } | null>(null);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
+  const [isExplanationReady, setIsExplanationReady] = useState(false);
 
   const router = useRouter();
   const { toast } = useToast();
@@ -140,6 +141,7 @@ export default function QuizPage() {
       correctAnswer: currentQ.correctAnswer,
       explanationContext: currentQ.explanationContext,
     });
+    setIsExplanationReady(false); // Explanation content will start loading
     setShowExplanation(true); 
   };
 
@@ -216,10 +218,11 @@ export default function QuizPage() {
           userAnswer={explanationData.userAnswer}
           correctAnswer={explanationData.correctAnswer}
           explanationContext={explanationData.explanationContext}
+          onContentLoadStateChange={setIsExplanationReady}
         />
       )}
       
-      {showExplanation && (
+      {showExplanation && isExplanationReady && (
          <div className="text-center mt-6">
             <Button onClick={handleNextAfterExplanation} size="lg">
                 {currentQuestionIndex < questions.length - 1 ? "Próxima Pergunta" : "Ver Resultados"}
@@ -230,4 +233,3 @@ export default function QuizPage() {
     </div>
   );
 }
-

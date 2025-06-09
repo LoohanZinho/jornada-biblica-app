@@ -24,36 +24,42 @@ interface ExplanationDialogProps {
   userAnswer: string; 
   correctAnswer: string; 
   explanationContext?: string;
+  onContentLoadStateChange: (isContentLoaded: boolean) => void;
 }
 
-export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, correctAnswer, explanationContext }: ExplanationDialogProps) {
+export function ExplanationDialog({ 
+  isOpen, 
+  onClose, 
+  quizQuestion, 
+  userAnswer, 
+  correctAnswer, 
+  explanationContext,
+  onContentLoadStateChange 
+}: ExplanationDialogProps) {
   const [explanation, setExplanation] = useState<ExplainAnswerOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   
-  // Ref to track the key for which a fetch has been initiated, to avoid redundant fetches for the same data.
   const initiatedFetchForKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       const currentKey = `${quizQuestion}-${userAnswer}-${correctAnswer}-${explanationContext}`;
 
-      // Set feedback message regardless of fetching, as it depends on current props
       if (userAnswer === correctAnswer) {
         setFeedbackMessage("Sua resposta está correta!");
       } else {
         setFeedbackMessage(`Sua resposta está incorreta. A resposta correta é: ${correctAnswer}.`);
       }
 
-      // If the key for the current data is different from the key we last initiated a fetch for,
-      // then we need to fetch.
       if (initiatedFetchForKeyRef.current !== currentKey) {
-        initiatedFetchForKeyRef.current = currentKey; // Mark this key as having an initiated fetch
+        initiatedFetchForKeyRef.current = currentKey; 
 
         setIsLoading(true);
+        onContentLoadStateChange(false); // Indicate content is now loading
         setError(null);
-        setExplanation(null); // Clear previous explanation
+        setExplanation(null); 
 
         const input: ExplainAnswerInput = {
           question: quizQuestion,
@@ -64,7 +70,6 @@ export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, c
 
         explainAnswer(input)
           .then(response => {
-            // Only update state if the response is for the key we initiated this fetch for
             if (initiatedFetchForKeyRef.current === currentKey) {
               setExplanation(response);
             }
@@ -78,15 +83,22 @@ export function ExplanationDialog({ isOpen, onClose, quizQuestion, userAnswer, c
           .finally(() => {
             if (initiatedFetchForKeyRef.current === currentKey) {
               setIsLoading(false);
+              onContentLoadStateChange(true); // Indicate content has loaded (or failed)
             }
           });
+      } else {
+        // Not fetching new data, content state depends on internal isLoading
+        if (!isLoading) {
+          onContentLoadStateChange(true); // Assumed ready if not internally loading
+        } else {
+           // This case should ideally not happen if logic is correct, but as a safeguard:
+          onContentLoadStateChange(false);
+        }
       }
     } else {
-      // When dialog closes, reset the ref so a fresh fetch occurs if it reopens, even with the same props
-      // (e.g., if a previous fetch failed and user reopens to retry)
       initiatedFetchForKeyRef.current = null;
     }
-  }, [isOpen, quizQuestion, userAnswer, correctAnswer, explanationContext]);
+  }, [isOpen, quizQuestion, userAnswer, correctAnswer, explanationContext, onContentLoadStateChange, isLoading]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
