@@ -18,11 +18,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface CurrentQuoteResolutionData {
   quote: string;
-  selectedCharacter: string; // O que o usuário selecionou
-  correctCharacter: string; // O que é o correto
+  selectedCharacter: string; 
+  correctCharacter: string; 
   referenceForExplanation: string;
   contextForExplanation: string;
-  isCorrect: boolean; // Se a seleção do usuário foi correta
+  isCorrect: boolean; 
 }
 
 export default function WhoSaidThisPage() {
@@ -132,8 +132,14 @@ export default function WhoSaidThisPage() {
     }
   }, [toast]);
 
-  const handleAnswer = (characterUserSelected: string, wasUserCorrect: boolean) => {
-    if (wasUserCorrect) {
+  const handleAnswer = (selectedChar: string, isSelectionCorrect: boolean) => {
+    console.log("--- [WhoSaidThisPage] handleAnswer ---");
+    console.log("Received - Selected Character:", selectedChar);
+    console.log("Received - Is Selection Correct?:", isSelectionCorrect);
+    console.log("------------------------------------");
+
+
+    if (isSelectionCorrect) {
       setScore(prev => prev + 1);
     }
 
@@ -141,21 +147,25 @@ export default function WhoSaidThisPage() {
 
     const resultEntry: WhoSaidThisResultType = {
       quote: currentQuestion.quote,
-      selectedCharacter: characterUserSelected,
+      selectedCharacter: selectedChar,
       correctCharacter: currentQuestion.correctCharacter,
-      isCorrect: wasUserCorrect,
+      isCorrect: isSelectionCorrect,
       reference: currentQuestion.referenceForExplanation,
     };
     setGameResults(prev => [...prev, resultEntry]);
     
-    setCurrentQuoteResolutionData({
+    const resolutionData = {
       quote: currentQuestion.quote,
-      selectedCharacter: characterUserSelected,
+      selectedCharacter: selectedChar,
       correctCharacter: currentQuestion.correctCharacter,
       referenceForExplanation: currentQuestion.referenceForExplanation,
       contextForExplanation: currentQuestion.contextForExplanation,
-      isCorrect: wasUserCorrect,
-    });
+      isCorrect: isSelectionCorrect, 
+    };
+    console.log("--- [WhoSaidThisPage] Setting Resolution Data ---");
+    console.log("Resolution Data Object:", JSON.parse(JSON.stringify(resolutionData)));
+    console.log("-------------------------------------------------");
+    setCurrentQuoteResolutionData(resolutionData);
     setShowQuoteResolutionCard(true); 
   };
 
