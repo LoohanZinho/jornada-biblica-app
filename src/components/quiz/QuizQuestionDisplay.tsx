@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { QuizQuestionType } from '@/types';
@@ -7,9 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { generateImageFromQuestion } from '@/ai/flows/generate-image-from-question';
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { AlertCircle, CheckCircle2, XCircle, Lightbulb } from 'lucide-react'; // Import Lightbulb
+import { AlertCircle, CheckCircle2, XCircle, Lightbulb } from 'lucide-react'; 
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
-import { Alert, AlertDescription } from "@/components/ui/alert"; // Import Alert components
+import { Alert, AlertDescription } from "@/components/ui/alert"; 
+import { playSound } from '@/lib/audioUtils'; // Importar playSound
 
 interface QuizQuestionDisplayProps {
   questionData: QuizQuestionType;
@@ -25,14 +27,14 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
-  const [showHint, setShowHint] = useState(false); // State for hint visibility
+  const [showHint, setShowHint] = useState(false); 
 
   const currentQuestionKeyRef = useRef<string | null>(null);
   const isFetchingImageRef = useRef(false);
 
   useEffect(() => {
     setShowCorrectAnimation(false);
-    setShowHint(false); // Reset hint visibility on new question
+    setShowHint(false); 
 
     if (!questionData || !questionData.id || !questionData.question) {
         setImageUrl(null);
@@ -88,12 +90,15 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
     const isCorrect = option === questionData.correctAnswer;
     if (isCorrect) {
       setShowCorrectAnimation(true);
+      playSound('correct.mp3'); // Tocar som de acerto (será simulado no console)
+    } else {
+      playSound('incorrect.mp3'); // Tocar som de erro (será simulado no console)
     }
     onAnswer(option, isCorrect);
   };
 
   const getButtonClass = (option: string) => {
-    if (!isAnswered) return '';
+    if (!isAnswered) return 'animate-button-press'; // Adiciona classe para animação de clique
     if (option === questionData.correctAnswer) return 'bg-green-500 hover:bg-green-600 text-white border-green-500';
     if (option === selectedAnswer && option !== questionData.correctAnswer) return 'bg-red-500 hover:bg-red-600 text-white border-red-500';
     return '';
@@ -132,7 +137,6 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
             {questionData.question}
         </CardDescription>
 
-        {/* Hint Button and Alert Section */}
         <div className="mb-4 text-center">
           <Button
             variant="outline"
@@ -140,6 +144,7 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
             onClick={() => setShowHint(!showHint)}
             disabled={isAnswered || !questionData.explanationContext}
             aria-pressed={showHint}
+            className="animate-button-press"
           >
             <Lightbulb className="mr-2 h-4 w-4" />
             {showHint ? "Ocultar Dica" : "Ver Dica"}

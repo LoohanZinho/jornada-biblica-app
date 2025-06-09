@@ -26,15 +26,13 @@ export async function generateImageFromQuestion(input: GenerateImageFromQuestion
 }
 
 const imageGenerationPromptForModel = (questionText: string) => {
-  // Certifica-se de que o prompt não seja excessivamente longo para o modelo de imagem
-  const maxLength = 300; // Um limite razoável para prompts de imagem
-  const CUE_TEXT = "Ilustração bíblica para: "
+  const maxLength = 350; 
   let effectivePrompt = questionText;
-  if (questionText.length > maxLength - CUE_TEXT.length ) {
-    effectivePrompt = questionText.substring(0, maxLength - CUE_TEXT.length - 3) + "...";
+  if (questionText.length > maxLength ) {
+    effectivePrompt = questionText.substring(0, maxLength - 3) + "...";
   }
   
-  return `Crie uma ilustração digital detalhada ou uma pintura com estilo narrativo claro que represente fielmente os elementos principais do seguinte texto/tema bíblico: "${effectivePrompt}". A imagem deve ser de fácil compreensão, focada nos acontecimentos ou personagens descritos, e evitar interpretações excessivamente artísticas ou abstratas. O objetivo é uma representação visual clara e direta, adequada para um contexto bíblico. É CRUCIAL que a imagem NÃO contenha NENHUM texto, NENHUMA letra, NENHUM caracter escrito. Estilo: arte digital, pintura bíblica clássica, cores ricas, iluminação dramática suave.`;
+  return `Gere uma imagem vibrante e artisticamente estilizada, como uma ilustração de um livro de histórias bíblicas de alta qualidade ou uma arte digital inspirada em vitrais, para o seguinte tema/texto bíblico: "${effectivePrompt}". A imagem deve ser visualmente cativante, com cores ricas e uma composição clara que transmita a essência da cena ou personagem. Foque em elementos narrativos e evite abstrações excessivas. IMPORTANTE: A imagem NÃO DEVE conter NENHUM texto, NENHUMA letra, NENHUM caracter escrito. Estilo desejado: arte digital detalhada, iluminação expressiva, cores saturadas, com um toque clássico ou de conto de fadas, mas respeitoso ao contexto bíblico.`;
 }
 
 const generateImageFromQuestionFlow = ai.defineFlow(

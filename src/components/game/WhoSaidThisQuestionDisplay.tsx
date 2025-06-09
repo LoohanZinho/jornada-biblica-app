@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { AlertCircle, CheckCircle2, MessageCircleQuestion, XCircle, Lightbulb, UserCheck } from 'lucide-react';
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
 import { Alert, AlertDescription as UIDialogAlertDescription } from "@/components/ui/alert";
+import { playSound } from '@/lib/audioUtils'; // Importar playSound
 
 interface WhoSaidThisQuestionDisplayProps {
   questionData: WhoSaidThisQuestionType;
@@ -70,7 +71,6 @@ export function WhoSaidThisQuestionDisplay({ questionData, onAnswer, questionNum
                 }
             })
             .catch(err => {
-                // console.error("Erro ao gerar imagem para 'Quem Disse Isso?':", err); // Mantido para erros de imagem
                 if (currentQuestionKeyRef.current === uniqueQuestionKey) {
                     setImageError(true);
                 }
@@ -91,6 +91,7 @@ export function WhoSaidThisQuestionDisplay({ questionData, onAnswer, questionNum
 
   const handleOptionClick = (characterClicked: string) => {
     if (isAnswered) return;
+    
     setSelectedCharacterByUser(characterClicked);
     setIsAnswered(true);
     
@@ -101,12 +102,15 @@ export function WhoSaidThisQuestionDisplay({ questionData, onAnswer, questionNum
 
     if (isChoiceCorrect) {
       setShowCorrectAnimation(true);
+      playSound('correct.mp3');
+    } else {
+      playSound('incorrect.mp3');
     }
     onAnswer(characterClicked, isChoiceCorrect);
   };
 
   const getButtonClass = (buttonCharacterOption: string) => {
-    if (!isAnswered) return '';
+    if (!isAnswered) return 'animate-button-press';
     const correctCharTrimmed = questionData.correctCharacter?.trim();
     const optionTrimmed = buttonCharacterOption?.trim();
     const selectedTrimmed = selectedCharacterByUser?.trim();
@@ -174,6 +178,7 @@ export function WhoSaidThisQuestionDisplay({ questionData, onAnswer, questionNum
             onClick={() => setShowHint(!showHint)}
             disabled={isAnswered}
             aria-pressed={showHint}
+            className="animate-button-press"
           >
             <Lightbulb className="mr-2 h-4 w-4" />
             {showHint ? "Ocultar Dica" : "Ver Dica"}

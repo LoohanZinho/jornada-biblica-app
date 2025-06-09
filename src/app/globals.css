@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -112,15 +113,19 @@
 }
 
 @layer utilities {
-  @keyframes correct-border-pulse {
-    0%, 100% {
-      border-color: hsl(var(--border));
-    }
-    50% {
-      border-color: hsl(var(--primary));
-    }
-  }
   .animate-correct-border-pulse {
     animation: correct-border-pulse 0.8s ease-in-out;
+  }
+  .animate-button-press {
+    @apply transform active:scale-95 transition-transform duration-75 ease-in-out;
+  }
+}
+
+@keyframes correct-border-pulse {
+  0%, 100% {
+    border-color: hsl(var(--border));
+  }
+  50% {
+    border-color: hsl(var(--primary));
   }
 }
