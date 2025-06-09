@@ -96,12 +96,15 @@ export function WhoSaidThisQuestionDisplay({ questionData, onAnswer, questionNum
     
     const clicked = characterClicked?.trim();
     const correct = questionData.correctCharacter?.trim();
-    const isChoiceCorrect = !!(clicked && correct && clicked === correct);
+    // Verifica se ambos 'clicked' e 'correct' são strings válidas antes de comparar
+    const isChoiceCorrect = !!(typeof clicked === 'string' && typeof correct === 'string' && clicked !== '' && correct !== '' && clicked === correct);
 
     console.log("--- [WhoSaidThisQuestionDisplay] ---");
+    console.log("Character Clicked (original):", characterClicked);
     console.log("Character Clicked (trimmed):", clicked);
+    console.log("Correct Character (from data original):", questionData.correctCharacter);
     console.log("Correct Character (trimmed from data):", correct);
-    console.log("Question Data Object:", JSON.parse(JSON.stringify(questionData)));
+    console.log("Question Data Object (deep copy for inspection):", JSON.parse(JSON.stringify(questionData))); 
     console.log("Is Choice Correct?:", isChoiceCorrect);
     console.log("------------------------------------");
 

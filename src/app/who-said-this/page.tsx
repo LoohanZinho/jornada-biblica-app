@@ -132,9 +132,9 @@ export default function WhoSaidThisPage() {
     }
   }, [toast]);
 
-  const handleAnswer = (selectedChar: string, isSelectionCorrect: boolean) => {
+  const handleAnswer = (selectedCharacter: string, isSelectionCorrect: boolean) => {
     console.log("--- [WhoSaidThisPage] handleAnswer ---");
-    console.log("Received - Selected Character:", selectedChar);
+    console.log("Received - Selected Character:", selectedCharacter);
     console.log("Received - Is Selection Correct?:", isSelectionCorrect);
     console.log("------------------------------------");
 
@@ -146,23 +146,23 @@ export default function WhoSaidThisPage() {
 
     const resultEntry: WhoSaidThisResultType = {
       quote: currentQuestion.quote,
-      selectedCharacter: selectedChar,
+      selectedCharacter: selectedCharacter, // Usando o parâmetro recebido
       correctCharacter: currentQuestion.correctCharacter,
-      isCorrect: isSelectionCorrect,
+      isCorrect: isSelectionCorrect, // Usando o parâmetro recebido
       reference: currentQuestion.referenceForExplanation,
     };
     setGameResults(prev => [...prev, resultEntry]);
     
     const resolutionData: CurrentQuoteResolutionData = {
       quote: currentQuestion.quote,
-      selectedCharacter: selectedChar,
+      selectedCharacter: selectedCharacter, // Usando o parâmetro recebido
       correctCharacter: currentQuestion.correctCharacter,
       referenceForExplanation: currentQuestion.referenceForExplanation,
       contextForExplanation: currentQuestion.contextForExplanation,
-      isCorrect: isSelectionCorrect, 
+      isCorrect: isSelectionCorrect, // Usando o parâmetro recebido
     };
     console.log("--- [WhoSaidThisPage] Setting Resolution Data ---");
-    console.log("Resolution Data Object:", JSON.parse(JSON.stringify(resolutionData)));
+    console.log("Resolution Data Object (deep copy for inspection):", JSON.parse(JSON.stringify(resolutionData)));
     console.log("-------------------------------------------------");
     setCurrentQuoteResolutionData(resolutionData);
     setShowQuoteResolutionCard(true); 
