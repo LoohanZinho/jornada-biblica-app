@@ -11,7 +11,7 @@ import { TrueFalseQuizQuestionDisplay } from '@/components/game/TrueFalseQuizQue
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, RotateCcw, CheckSquare, XSquare, Lightbulb } from 'lucide-react';
+import { ArrowRight, RotateCcw, CheckSquare, XSquare, Lightbulb, CheckCircle2, XCircle } from 'lucide-react'; // Added CheckCircle2, XCircle
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
