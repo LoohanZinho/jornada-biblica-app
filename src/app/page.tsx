@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { ListChecks, BookOpenText, Award, HeartHandshake, Bird, MessageSquareQuote } from 'lucide-react';
+import { ListChecks, BookOpenText, Award, HeartHandshake, Bird, MessageSquareQuote, Quote } from 'lucide-react'; // Adicionado Quote
 import Image from 'next/image';
 
 const featureCards = [
@@ -19,6 +19,13 @@ const featureCards = [
     href: '/guess-the-text',
     icon: <MessageSquareQuote className="h-10 w-10 text-primary mb-4" />,
     cta: 'Jogar Agora',
+  },
+  {
+    title: 'Quem Disse Isso?',
+    description: 'Identifique o autor de citações bíblicas famosas e menos conhecidas.',
+    href: '/who-said-this', // Placeholder - página ainda não criada
+    icon: <Quote className="h-10 w-10 text-primary mb-4" />,
+    cta: 'Desafiar Conhecimento',
   },
   {
     title: 'Versículo do Dia',

@@ -37,7 +37,7 @@ export interface ExplainAnswerOutput {
   bibleVerseText: string;
 }
 
-// Tipos para o novo jogo "Qual é o Texto?"
+// Tipos para o jogo "Qual é o Texto?"
 export interface GuessTheTextQuestionType {
   id: string;
   textSnippet: string; // O trecho do texto bíblico
@@ -55,4 +55,25 @@ export interface GuessTheTextResult {
   correctAnswer: string; // Referência correta
   fullText: string; // Texto completo do versículo correto
   isCorrect: boolean;
+}
+
+// Tipos para o jogo "Quem Disse Isso?"
+export interface WhoSaidThisQuestionType {
+  id: string;
+  quote: string; // A citação bíblica a ser exibida
+  options: string[]; // Array de nomes de personagens bíblicos
+  correctCharacter: string; // O nome do personagem correto
+  referenceForExplanation: string; // A referência bíblica da citação (ex: "Mateus 5:3")
+  contextForExplanation: string; // Um breve contexto sobre a citação para ajudar o flow de explicação
+  topic: string;
+  difficulty: "fácil" | "médio" | "difícil";
+  imageHint?: string; // Opcional, dica para gerar imagem de fundo
+}
+
+export interface WhoSaidThisResultType {
+  quote: string;
+  selectedCharacter: string;
+  correctCharacter: string;
+  isCorrect: boolean;
+  reference: string; // Referência da citação para exibição no resultado
 }

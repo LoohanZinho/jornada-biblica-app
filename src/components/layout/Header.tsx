@@ -2,13 +2,14 @@
 import Link from 'next/link';
 import { AppLogo } from '@/components/icons/AppLogo';
 import { Button } from '@/components/ui/button';
-import { Menu, Home, ListChecks, BookOpenText, MessageSquareQuote } from 'lucide-react';
+import { Menu, Home, ListChecks, BookOpenText, MessageSquareQuote, Quote } from 'lucide-react'; // Adicionado Quote
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 const navItems = [
   { href: '/', label: 'Início', icon: <Home className="h-5 w-5" /> },
   { href: '/quiz', label: 'Quiz Bíblico', icon: <ListChecks className="h-5 w-5" /> },
   { href: '/guess-the-text', label: 'Qual é o Texto?', icon: <MessageSquareQuote className="h-5 w-5" /> },
+  { href: '/who-said-this', label: 'Quem Disse Isso?', icon: <Quote className="h-5 w-5" /> }, // Nova entrada
   { href: '/daily-verse', label: 'Versículo do Dia', icon: <BookOpenText className="h-5 w-5" /> },
 ];
 
