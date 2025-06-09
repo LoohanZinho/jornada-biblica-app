@@ -70,7 +70,7 @@ export function WhoSaidThisQuestionDisplay({ questionData, onAnswer, questionNum
                 }
             })
             .catch(err => {
-                console.error("Erro ao gerar imagem para 'Quem Disse Isso?':", err);
+                // console.error("Erro ao gerar imagem para 'Quem Disse Isso?':", err); // Mantido para erros de imagem
                 if (currentQuestionKeyRef.current === uniqueQuestionKey) {
                     setImageError(true);
                 }
@@ -94,19 +94,10 @@ export function WhoSaidThisQuestionDisplay({ questionData, onAnswer, questionNum
     setSelectedCharacterByUser(characterClicked);
     setIsAnswered(true);
     
-    const clicked = characterClicked?.trim();
-    const correct = questionData.correctCharacter?.trim();
-    // Verifica se ambos 'clicked' e 'correct' são strings válidas antes de comparar
-    const isChoiceCorrect = !!(typeof clicked === 'string' && typeof correct === 'string' && clicked !== '' && correct !== '' && clicked === correct);
-
-    console.log("--- [WhoSaidThisQuestionDisplay] ---");
-    console.log("Character Clicked (original):", characterClicked);
-    console.log("Character Clicked (trimmed):", clicked);
-    console.log("Correct Character (from data original):", questionData.correctCharacter);
-    console.log("Correct Character (trimmed from data):", correct);
-    console.log("Question Data Object (deep copy for inspection):", JSON.parse(JSON.stringify(questionData))); 
-    console.log("Is Choice Correct?:", isChoiceCorrect);
-    console.log("------------------------------------");
+    const clickedTrimmed = characterClicked?.trim();
+    const correctTrimmed = questionData.correctCharacter?.trim();
+    
+    const isChoiceCorrect = !!(typeof clickedTrimmed === 'string' && typeof correctTrimmed === 'string' && clickedTrimmed !== '' && correctTrimmed !== '' && clickedTrimmed === correctTrimmed);
 
     if (isChoiceCorrect) {
       setShowCorrectAnimation(true);

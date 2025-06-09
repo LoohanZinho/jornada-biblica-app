@@ -103,7 +103,7 @@ export default function WhoSaidThisPage() {
       setGameStarted(true);
 
     } catch (error) {
-      console.error("Erro ao gerar perguntas 'Quem Disse Isso?':", error);
+      // console.error("Erro ao gerar perguntas 'Quem Disse Isso?':", error); // Mantido para erros de IA
       toast({
         title: "Erro ao Gerar Perguntas",
         description: `Houve um problema com a IA: ${(error as Error).message}. Usando perguntas de exemplo.`,
@@ -132,12 +132,7 @@ export default function WhoSaidThisPage() {
     }
   }, [toast]);
 
-  const handleAnswer = (selectedCharacter: string, isSelectionCorrect: boolean) => {
-    console.log("--- [WhoSaidThisPage] handleAnswer ---");
-    console.log("Received - Selected Character:", selectedCharacter);
-    console.log("Received - Is Selection Correct?:", isSelectionCorrect);
-    console.log("------------------------------------");
-
+  const handleAnswer = (selectedChar: string, isSelectionCorrect: boolean) => {
     if (isSelectionCorrect) {
       setScore(prev => prev + 1);
     }
@@ -146,24 +141,21 @@ export default function WhoSaidThisPage() {
 
     const resultEntry: WhoSaidThisResultType = {
       quote: currentQuestion.quote,
-      selectedCharacter: selectedCharacter, // Usando o parâmetro recebido
+      selectedCharacter: selectedChar,
       correctCharacter: currentQuestion.correctCharacter,
-      isCorrect: isSelectionCorrect, // Usando o parâmetro recebido
+      isCorrect: isSelectionCorrect,
       reference: currentQuestion.referenceForExplanation,
     };
     setGameResults(prev => [...prev, resultEntry]);
     
     const resolutionData: CurrentQuoteResolutionData = {
       quote: currentQuestion.quote,
-      selectedCharacter: selectedCharacter, // Usando o parâmetro recebido
+      selectedCharacter: selectedChar,
       correctCharacter: currentQuestion.correctCharacter,
       referenceForExplanation: currentQuestion.referenceForExplanation,
       contextForExplanation: currentQuestion.contextForExplanation,
-      isCorrect: isSelectionCorrect, // Usando o parâmetro recebido
+      isCorrect: isSelectionCorrect,
     };
-    console.log("--- [WhoSaidThisPage] Setting Resolution Data ---");
-    console.log("Resolution Data Object (deep copy for inspection):", JSON.parse(JSON.stringify(resolutionData)));
-    console.log("-------------------------------------------------");
     setCurrentQuoteResolutionData(resolutionData);
     setShowQuoteResolutionCard(true); 
   };
