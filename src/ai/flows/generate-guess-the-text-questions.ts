@@ -46,10 +46,12 @@ export async function generateGuessTheTextQuestions(input: GenerateGuessTheTextQ
 }
 
 const prompt = ai.definePrompt({
-  name: 'generateGuessTheTextQuestionsPromptTNM',
+  name: 'generateGuessTheTextQuestionsPromptTNMRevised',
   input: {schema: GenerateGuessTheTextQuestionsInputSchema},
   output: {schema: GenerateGuessTheTextQuestionsOutputSchema},
   prompt: `Você é um erudito bíblico preparando um jogo chamado "Qual é o Texto?".
+Sua principal tarefa é gerar perguntas **NOVAS e ÚNICAS** para cada solicitação. **NÃO REPITA** perguntas que você possa ter gerado antes ou que sejam semelhantes a exemplos comuns. Priorize a originalidade e a variedade.
+
 Gere EXATAMENTE {{numberOfQuestions}} perguntas sobre o tópico "{{topic}}" com dificuldade "{{difficulty}}".
 Para cada pergunta, o usuário verá um pequeno trecho de um versículo e deverá escolher a referência bíblica correta entre 4 opções.
 
@@ -57,7 +59,7 @@ IMPORTANTE:
 - Use preferencialmente a "Tradução do Novo Mundo das Escrituras Sagradas" para os textos e trechos.
 - Os trechos ('textSnippet') devem ser curtos (5-15 palavras), mas suficientemente distintos para permitir a identificação.
 - As opções de referência ('options') devem incluir 1 correta e 3 incorretas, mas plausíveis.
-  - Para 'fácil': opções incorretas podem ser de livros diferentes.
+  - Para 'fácil': Os 'textSnippet' devem ser de passagens bíblicas **muito conhecidas e facilmente reconhecíveis**. As opções incorretas podem ser de livros completamente diferentes, tornando a escolha correta mais clara para quem tem um conhecimento básico.
   - Para 'médio': opções incorretas podem ser do mesmo livro, mas capítulos/versículos errados, ou de livros com temas muito similares.
   - Para 'difícil': opções incorretas podem ser muito próximas da correta (ex: mesmo capítulo, versículos próximos) ou de passagens obscuras que se assemelham tematicamente.
 - A 'correctAnswer' deve ser uma das strings exatas das 'options'.
@@ -76,6 +78,7 @@ Para CADA uma das {{numberOfQuestions}} perguntas, forneça TODOS os seguintes c
 7.  'difficulty'
 8.  'imageHint'
 
+Garanta que cada conjunto de perguntas gerado seja original e diverso.
 Formate a saída como um objeto JSON que corresponda ao schema de saída especificado.
 O campo "questions" DEVE ser um array contendo EXATAMENTE {{numberOfQuestions}} objetos de pergunta.
 Evite introduções, apenas o JSON.
@@ -84,7 +87,7 @@ Evite introduções, apenas o JSON.
 
 const generateGuessTheTextQuestionsFlow = ai.defineFlow(
   {
-    name: 'generateGuessTheTextQuestionsFlowTNM',
+    name: 'generateGuessTheTextQuestionsFlowTNMRevised',
     inputSchema: GenerateGuessTheTextQuestionsInputSchema,
     outputSchema: GenerateGuessTheTextQuestionsOutputSchema,
   },
@@ -92,17 +95,14 @@ const generateGuessTheTextQuestionsFlow = ai.defineFlow(
     const {output: aiOutput} = await prompt(input);
 
     if (!aiOutput || !aiOutput.questions || !Array.isArray(aiOutput.questions)) {
-      // Lida com casos onde a estrutura básica da resposta da IA está ausente ou incorreta.
       throw new Error(
         'A IA não retornou uma estrutura de resposta válida (objeto esperado com uma propriedade "questions" do tipo array).'
       );
     }
 
-    // Como input.numberOfQuestions é sempre > 0 devido ao schema,
-    // uma lista vazia de perguntas significa uma falha da IA em gerar o conteúdo solicitado.
-    if (aiOutput.questions.length === 0) {
+    if (input.numberOfQuestions > 0 && aiOutput.questions.length === 0) {
       throw new Error(
-        'A IA retornou uma lista de perguntas vazia, embora perguntas fossem esperadas.'
+        'A IA retornou uma lista de perguntas vazia, embora perguntas fossem esperadas. Nenhuma pergunta gerada.'
       );
     }
     
@@ -110,9 +110,6 @@ const generateGuessTheTextQuestionsFlow = ai.defineFlow(
     const processedQuestions: GuessTheTextQuestionType[] = aiOutput.questions.map((q, index) => {
       if (!q.id || !q.textSnippet || !q.options || q.options.length !== 4 || !q.correctAnswer || !q.fullText || !q.topic || !q.difficulty) {
         console.warn("Pergunta 'Qual é o Texto?' da IA incompleta ou malformada no índice:", index, q);
-        // Cria um objeto de fallback para evitar quebrar o jogo, mas idealmente a IA deve ser robusta.
-        // Este fallback ainda pode ser problemático se campos essenciais estiverem faltando.
-        // Considerar lançar um erro aqui também se a validação estrita for necessária.
         return {
           id: q.id || `invalid-gtt-q${index + 1}-${Date.now()}`,
           textSnippet: q.textSnippet || "Trecho inválido.",
@@ -131,11 +128,6 @@ const generateGuessTheTextQuestionsFlow = ai.defineFlow(
       return q as GuessTheTextQuestionType;
     });
     
-    // Se após o processamento, por algum motivo todas as perguntas se tornaram inválidas e foram filtradas
-    // (embora o map atual não filtre, mas substitua), podemos adicionar um check final.
-    // No entanto, o map atual sempre retorna um objeto, então processedQuestions terá o mesmo tamanho de aiOutput.questions.
-    // A verificação principal é se aiOutput.questions estava vazio em primeiro lugar.
-
     return { questions: processedQuestions };
   }
 );

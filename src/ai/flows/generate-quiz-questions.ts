@@ -41,13 +41,20 @@ export async function generateQuizQuestions(input: GenerateQuizQuestionsInput): 
 }
 
 const prompt = ai.definePrompt({
-  name: 'generateQuizQuestionsPromptPortugueseReverted',
+  name: 'generateQuizQuestionsPromptPortugueseRevised',
   input: {schema: GenerateQuizQuestionsInputSchema},
   output: {schema: GenerateQuizQuestionsOutputSchema}, 
   prompt: `Você é um especialista em Bíblia e teologia, criando um quiz interativo.
+Sua principal tarefa é gerar perguntas de quiz **NOVAS e ÚNICAS** para cada solicitação. **NÃO REPITA** perguntas que você possa ter gerado antes ou que sejam semelhantes a exemplos comuns. Priorize a originalidade e a variedade.
+
 Gere EXATAMENTE {{numberOfQuestions}} perguntas de quiz em português sobre o tópico "{{topic}}" com dificuldade "{{difficulty}}".
 
 IMPORTANTE: As perguntas devem focar EXCLUSIVAMENTE em acontecimentos históricos, narrativas e fatos bíblicos do passado (por exemplo: "Quem liderou o êxodo do Egito?", "Qual milagre Jesus realizou em Caná?", "Quem foi o primeiro rei de Israel?", "Qual era a profissão de Mateus antes de seguir Jesus?"). EVITE perguntas sobre interpretações teológicas, doutrinas abstratas, significados simbólicos ou conceitos puramente teóricos. Foque em eventos, personagens e ações concretas descritas na Bíblia.
+
+Instruções de Dificuldade:
+- Para dificuldade 'fácil': As perguntas devem ser sobre personagens, eventos ou fatos bíblicos **extremamente conhecidos e fundamentais**. As opções incorretas devem ser claramente distintas da correta, possivelmente de contextos bíblicos diferentes ou menos relevantes para a pergunta, tornando a resposta correta mais evidente para quem tem conhecimento básico.
+- Para dificuldade 'médio': As perguntas podem envolver detalhes um pouco menos óbvios sobre eventos conhecidos, ou personagens secundários importantes. As opções incorretas podem ser mais plausíveis, talvez do mesmo período ou livro bíblico.
+- Para dificuldade 'difícil': As perguntas podem abordar eventos menos conhecidos, genealogias específicas, detalhes de leis ou profecias, ou personagens menos proeminentes. As opções incorretas devem ser desafiadoras e muito próximas da correta, exigindo um conhecimento mais aprofundado.
 
 Para CADA uma das {{numberOfQuestions}} perguntas, forneça TODOS os seguintes campos:
 1.  'id': Um identificador único para a pergunta (ex: "q1-{{topic}}-{{difficulty}}", "q2-geral-facil"). Use o tópico e dificuldade no id.
@@ -68,7 +75,7 @@ As opções devem ser apenas o texto das opções, sem "a)", "b)", etc.
 
 const generateQuizQuestionsFlow = ai.defineFlow(
   {
-    name: 'generateQuizQuestionsFlowPortugueseReverted',
+    name: 'generateQuizQuestionsFlowPortugueseRevised',
     inputSchema: GenerateQuizQuestionsInputSchema,
     outputSchema: GenerateQuizQuestionsOutputSchema, 
   },
@@ -78,23 +85,30 @@ const generateQuizQuestionsFlow = ai.defineFlow(
     if (!aiOutput || !aiOutput.questions || !Array.isArray(aiOutput.questions)) {
       throw new Error('Falha ao gerar perguntas do quiz: a IA não retornou um array de perguntas válido.');
     }
+
+    if (input.numberOfQuestions > 0 && aiOutput.questions.length === 0) {
+      throw new Error(
+        'A IA retornou uma lista de perguntas vazia, embora perguntas fossem esperadas. Nenhuma pergunta gerada.'
+      );
+    }
     
-    // A IA deve retornar os campos completos conforme o QuizQuestionSchema.
-    // Adicionamos uma leve validação/normalização para garantir que os campos essenciais estejam presentes.
     const processedQuestions: QuizQuestionType[] = aiOutput.questions.map((aiQuestion, index) => {
-      if (!aiQuestion.question || !aiQuestion.options || !aiQuestion.correctAnswer || !aiQuestion.id || !aiQuestion.topic || !aiQuestion.difficulty) {
+      if (!aiQuestion.question || !aiQuestion.options || aiQuestion.options.length !== 4 || !aiQuestion.correctAnswer || !aiQuestion.id || !aiQuestion.topic || !aiQuestion.difficulty) {
         console.warn("Pergunta da IA incompleta ou malformada:", aiQuestion);
-        // Cria uma pergunta "inválida" de fallback para não quebrar o quiz, mas idealmente a IA deve seguir o prompt.
         return {
           id: aiQuestion.id || `invalid-q${index + 1}-${Date.now()}`,
           question: aiQuestion.question || "Pergunta inválida da IA",
-          options: aiQuestion.options || ["Opção A", "Opção B", "Opção C", "Opção D"],
-          correctAnswer: aiQuestion.correctAnswer || (aiQuestion.options ? aiQuestion.options[0] : "Opção A"),
+          options: aiQuestion.options && aiQuestion.options.length === 4 ? aiQuestion.options : ["Opção A", "Opção B", "Opção C", "Opção D"],
+          correctAnswer: aiQuestion.correctAnswer || (aiQuestion.options && aiQuestion.options.length > 0 ? aiQuestion.options[0] : "Opção A"),
           topic: aiQuestion.topic || input.topic,
           difficulty: aiQuestion.difficulty || input.difficulty,
           explanationContext: aiQuestion.explanationContext,
           imageHint: aiQuestion.imageHint,
         };
+      }
+      if (!aiQuestion.options.includes(aiQuestion.correctAnswer)) {
+        console.warn("Resposta correta não está nas opções para a pergunta da IA:", aiQuestion.id, "Usando a primeira opção como fallback.");
+        return { ...aiQuestion, correctAnswer: aiQuestion.options[0] }; 
       }
       return aiQuestion as QuizQuestionType; 
     });
@@ -102,3 +116,4 @@ const generateQuizQuestionsFlow = ai.defineFlow(
     return { questions: processedQuestions };
   }
 );
+
