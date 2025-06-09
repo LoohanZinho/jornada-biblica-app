@@ -161,11 +161,13 @@ export function ExplanationDialog({
           </ScrollArea>
         </div>
 
-        <DialogFooter className="sm:justify-center">
-          <Button onClick={onClose} variant="default" className="w-full sm:w-auto">
-            Entendi!
-          </Button>
-        </DialogFooter>
+        {!isLoading && (
+          <DialogFooter className="sm:justify-center">
+            <Button onClick={onClose} variant="default" className="w-full sm:w-auto">
+              Entendi!
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
