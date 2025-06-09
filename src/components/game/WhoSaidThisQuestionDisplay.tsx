@@ -105,7 +105,6 @@ export function WhoSaidThisQuestionDisplay({ questionData, onAnswer, questionNum
     console.log("Is Choice Correct?:", isChoiceCorrect);
     console.log("------------------------------------");
 
-
     if (isChoiceCorrect) {
       setShowCorrectAnimation(true);
     }
@@ -118,10 +117,10 @@ export function WhoSaidThisQuestionDisplay({ questionData, onAnswer, questionNum
     const optionTrimmed = buttonCharacterOption?.trim();
     const selectedTrimmed = selectedCharacterByUser?.trim();
 
-    if (optionTrimmed === correctCharTrimmed) {
+    if (optionTrimmed && correctCharTrimmed && optionTrimmed === correctCharTrimmed) {
       return 'bg-green-500 hover:bg-green-600 text-white border-green-500';
     }
-    if (optionTrimmed === selectedTrimmed && optionTrimmed !== correctCharTrimmed) {
+    if (optionTrimmed && selectedTrimmed && optionTrimmed === selectedTrimmed && optionTrimmed !== correctCharTrimmed) {
       return 'bg-red-500 hover:bg-red-600 text-white border-red-500';
     }
     return '';
@@ -202,13 +201,13 @@ export function WhoSaidThisQuestionDisplay({ questionData, onAnswer, questionNum
                 getButtonClass(optionText)
               )}
               onClick={() => handleOptionClick(optionText)}
-              disabled={isAnswered && selectedCharacterByUser?.trim() !== optionText?.trim() && optionText?.trim() !== questionData.correctCharacter?.trim()}
+              disabled={isAnswered && selectedCharacterByUser?.trim() !== optionText?.trim() && (!questionData.correctCharacter || optionText?.trim() !== questionData.correctCharacter?.trim())}
               aria-pressed={selectedCharacterByUser === optionText}
             >
               <UserCheck className="mr-3 h-5 w-5 text-primary/80" />
               {optionText}
-              {isAnswered && optionText?.trim() === questionData.correctCharacter?.trim() && <CheckCircle2 className="ml-auto h-5 w-5 text-white" />}
-              {isAnswered && selectedCharacterByUser?.trim() === optionText?.trim() && optionText?.trim() !== questionData.correctCharacter?.trim() && <XCircle className="ml-auto h-5 w-5 text-white" />}
+              {isAnswered && questionData.correctCharacter && optionText?.trim() === questionData.correctCharacter?.trim() && <CheckCircle2 className="ml-auto h-5 w-5 text-white" />}
+              {isAnswered && selectedCharacterByUser?.trim() === optionText?.trim() && questionData.correctCharacter && optionText?.trim() !== questionData.correctCharacter?.trim() && <XCircle className="ml-auto h-5 w-5 text-white" />}
             </Button>
           ))}
         </div>

@@ -138,7 +138,6 @@ export default function WhoSaidThisPage() {
     console.log("Received - Is Selection Correct?:", isSelectionCorrect);
     console.log("------------------------------------");
 
-
     if (isSelectionCorrect) {
       setScore(prev => prev + 1);
     }
@@ -154,7 +153,7 @@ export default function WhoSaidThisPage() {
     };
     setGameResults(prev => [...prev, resultEntry]);
     
-    const resolutionData = {
+    const resolutionData: CurrentQuoteResolutionData = {
       quote: currentQuestion.quote,
       selectedCharacter: selectedChar,
       correctCharacter: currentQuestion.correctCharacter,
