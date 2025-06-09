@@ -17,7 +17,7 @@ export interface DailyVerse {
   theme?: string; 
 }
 
-export interface QuizSettings { // Pode ser renomeado para GameSettings no futuro se necessário
+export interface QuizSettings { 
   topic: string; 
   difficulty: "fácil" | "médio" | "difícil" | "todos"; 
   numberOfQuestions: number;
@@ -37,37 +37,35 @@ export interface ExplainAnswerOutput {
   bibleVerseText: string;
 }
 
-// Tipos para o jogo "Qual é o Texto?"
 export interface GuessTheTextQuestionType {
   id: string;
-  textSnippet: string; // O trecho do texto bíblico
-  options: string[]; // Referências bíblicas como opções (ex: "Gênesis 1:1", "João 3:16")
-  correctAnswer: string; // A referência correta
-  fullText: string; // O texto completo do versículo para exibição posterior
-  topic: string; // Tópico relacionado ao versículo
+  textSnippet: string; 
+  options: string[]; 
+  correctAnswer: string; 
+  fullText: string; 
+  topic: string; 
   difficulty: "fácil" | "médio" | "difícil";
-  imageHint?: string; // Dica para imagem de fundo
+  imageHint?: string; 
 }
 
 export interface GuessTheTextResult {
   textSnippet: string;
-  selectedAnswer: string; // Referência selecionada pelo usuário
-  correctAnswer: string; // Referência correta
-  fullText: string; // Texto completo do versículo correto
+  selectedAnswer: string; 
+  correctAnswer: string; 
+  fullText: string; 
   isCorrect: boolean;
 }
 
-// Tipos para o jogo "Quem Disse Isso?"
 export interface WhoSaidThisQuestionType {
   id: string;
-  quote: string; // A citação bíblica a ser exibida
-  options: string[]; // Array de nomes de personagens bíblicos
-  correctCharacter: string; // O nome do personagem correto
-  referenceForExplanation: string; // A referência bíblica da citação (ex: "Mateus 5:3")
-  contextForExplanation: string; // Um breve contexto sobre a citação para ajudar o flow de explicação
+  quote: string; 
+  options: string[]; 
+  correctCharacter: string; 
+  referenceForExplanation: string; 
+  contextForExplanation: string; 
   topic: string;
   difficulty: "fácil" | "médio" | "difícil";
-  imageHint?: string; // Opcional, dica para gerar imagem de fundo
+  imageHint?: string; 
 }
 
 export interface WhoSaidThisResultType {
@@ -75,5 +73,24 @@ export interface WhoSaidThisResultType {
   selectedCharacter: string;
   correctCharacter: string;
   isCorrect: boolean;
-  reference: string; // Referência da citação para exibição no resultado
+  reference: string; 
+}
+
+// Tipos para o jogo "Verdadeiro ou Falso"
+export interface TrueFalseQuestionType {
+  id: string;
+  statement: string; // A afirmação a ser julgada
+  correctAnswer: boolean; // true se a afirmação for verdadeira, false se for falsa
+  explanation: string; // Explicação do porquê é V ou F
+  topic: string;
+  difficulty: "fácil" | "médio" | "difícil";
+  imageHint?: string;
+}
+
+export interface TrueFalseResultType {
+  statement: string;
+  selectedAnswer: boolean; // Resposta do usuário
+  correctAnswer: boolean; // Resposta correta
+  isCorrect: boolean;
+  explanation: string;
 }
