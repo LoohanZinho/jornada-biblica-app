@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { GuessTheTextQuestionType } from '@/types';
@@ -8,9 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { generateImageFromQuestion } from '@/ai/flows/generate-image-from-question';
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { AlertCircle, CheckCircle2, FileText, XCircle, Lightbulb } from 'lucide-react';
+import { AlertCircle, CheckCircle2, FileText, XCircle, Lightbulb } from 'lucide-react'; // Import Lightbulb
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert"; // Import Alert components
 
 interface GuessTheTextQuestionDisplayProps {
   questionData: GuessTheTextQuestionType;
@@ -26,7 +25,7 @@ export function GuessTheTextQuestionDisplay({ questionData, onAnswer, questionNu
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
-  const [showHint, setShowHint] = useState(false);
+  const [showHint, setShowHint] = useState(false); // State for hint visibility
 
   const currentQuestionKeyRef = useRef<string | null>(null);
   const isFetchingImageRef = useRef(false);
@@ -150,6 +149,7 @@ export function GuessTheTextQuestionDisplay({ questionData, onAnswer, questionNu
 
         <p className="text-center text-muted-foreground mb-4">Qual é a referência correta para este trecho?</p>
 
+        {/* Hint Button and Alert Section */}
         <div className="mb-4 text-center">
           <Button
             variant="outline"
@@ -192,5 +192,3 @@ export function GuessTheTextQuestionDisplay({ questionData, onAnswer, questionNu
     </Card>
   );
 }
-
-    

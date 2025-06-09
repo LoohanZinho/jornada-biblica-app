@@ -1,19 +1,18 @@
-
 "use client";
 
 import type { QuizQuestionType } from '@/types';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { generateImageFromQuestion } from '@/ai/flows/generate-image-from-question'; 
+import { generateImageFromQuestion } from '@/ai/flows/generate-image-from-question';
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { AlertCircle, CheckCircle2, XCircle, Lightbulb } from 'lucide-react'; 
+import { AlertCircle, CheckCircle2, XCircle, Lightbulb } from 'lucide-react'; // Import Lightbulb
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert"; // Import Alert components
 
 interface QuizQuestionDisplayProps {
-  questionData: QuizQuestionType; 
+  questionData: QuizQuestionType;
   onAnswer: (answer: string, isCorrect: boolean) => void;
   questionNumber: number;
   totalQuestions: number;
@@ -26,13 +25,13 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
-  const [showHint, setShowHint] = useState(false);
-  
-  const currentQuestionKeyRef = useRef<string | null>(null); 
-  const isFetchingImageRef = useRef(false); 
+  const [showHint, setShowHint] = useState(false); // State for hint visibility
+
+  const currentQuestionKeyRef = useRef<string | null>(null);
+  const isFetchingImageRef = useRef(false);
 
   useEffect(() => {
-    setShowCorrectAnimation(false); 
+    setShowCorrectAnimation(false);
     setShowHint(false); // Reset hint visibility on new question
 
     if (!questionData || !questionData.id || !questionData.question) {
@@ -51,36 +50,36 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
         setSelectedAnswer(null);
         setIsAnswered(false);
         setImageUrl(null);
-        setImageLoading(true); 
+        setImageLoading(true);
         setImageError(false);
-        isFetchingImageRef.current = false; 
+        isFetchingImageRef.current = false;
     }
 
     if (currentQuestionKeyRef.current === uniqueQuestionKey && !imageUrl && !isFetchingImageRef.current && !imageError) {
         isFetchingImageRef.current = true;
-        setImageLoading(true); 
-        setImageError(false); 
+        setImageLoading(true);
+        setImageError(false);
 
-        generateImageFromQuestion({ questionText: questionData.imageHint || questionData.question }) 
+        generateImageFromQuestion({ questionText: questionData.imageHint || questionData.question })
             .then(response => {
-                if (currentQuestionKeyRef.current === uniqueQuestionKey) { 
+                if (currentQuestionKeyRef.current === uniqueQuestionKey) {
                     setImageUrl(response.imageUrl);
                 }
             })
             .catch(err => {
                 console.error("Erro ao gerar imagem:", err);
-                if (currentQuestionKeyRef.current === uniqueQuestionKey) { 
+                if (currentQuestionKeyRef.current === uniqueQuestionKey) {
                     setImageError(true);
                 }
             })
             .finally(() => {
-                 if (currentQuestionKeyRef.current === uniqueQuestionKey) { 
+                 if (currentQuestionKeyRef.current === uniqueQuestionKey) {
                     setImageLoading(false);
                  }
-                 isFetchingImageRef.current = false; 
+                 isFetchingImageRef.current = false;
             });
     }
-  }, [questionData, imageUrl, imageError]); 
+  }, [questionData, imageUrl, imageError]);
 
   const handleOptionClick = (option: string) => {
     if (isAnswered) return;
@@ -124,20 +123,21 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
           {!imageLoading && !imageError && imageUrl && (
             <Image src={imageUrl} alt={`Ilustração para: ${questionData.question}`} layout="fill" objectFit="cover" data-ai-hint={questionData.imageHint || "bible scene"} />
           )}
-          {!imageLoading && !imageError && !imageUrl && ( 
+          {!imageLoading && !imageError && !imageUrl && (
              <Image src={`https://placehold.co/600x400.png`} alt="Ilustração para a pergunta" layout="fill" objectFit="cover" data-ai-hint={questionData.imageHint || "bible scene"} />
           )}
         </div>
-        
+
         <CardDescription className="text-lg md:text-xl font-body min-h-[3em] text-left mb-6">
             {questionData.question}
         </CardDescription>
 
+        {/* Hint Button and Alert Section */}
         <div className="mb-4 text-center">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setShowHint(!showHint)} 
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowHint(!showHint)}
             disabled={isAnswered || !questionData.explanationContext}
             aria-pressed={showHint}
           >
@@ -155,12 +155,12 @@ export function QuizQuestionDisplay({ questionData, onAnswer, questionNumber, to
             </Alert>
           )}
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {questionData.options.map((option, index) => (
             <Button
               key={index}
-              variant="outline" 
+              variant="outline"
               className={cn(
                 "w-full h-auto py-3 text-base justify-start text-left whitespace-normal transition-all duration-300 ease-in-out transform hover:scale-105",
                 getButtonClass(option)
