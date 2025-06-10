@@ -32,7 +32,7 @@ const imageGenerationPromptForModel = (questionText: string) => {
     effectivePrompt = questionText.substring(0, maxLength - 3) + "...";
   }
   
-  return `Gere uma imagem vibrante e artisticamente estilizada, como uma ilustração de um livro de histórias bíblicas de alta qualidade ou uma arte digital inspirada em vitrais, para o seguinte tema/texto bíblico: "${effectivePrompt}". A imagem deve ser visualmente cativante, com cores ricas e uma composição clara que transmita a essência da cena ou personagem. Foque em elementos narrativos e evite abstrações excessivas. IMPORTANTE: A imagem NÃO DEVE conter NENHUM texto, NENHUMA letra, NENHUM caracter escrito. Estilo desejado: arte digital detalhada, iluminação expressiva, cores saturadas, com um toque clássico ou de conto de fadas, mas respeitoso ao contexto bíblico.`;
+  return `Gere uma imagem vibrante e artisticamente estilizada, como uma ilustração de um livro de histórias bíblicas de alta qualidade, para o seguinte tema/texto bíblico: "${effectivePrompt}". A imagem deve ser visualmente cativante, com cores ricas e uma composição clara que transmita a essência da cena ou personagem. Foque em elementos narrativos e evite abstrações excessivas. IMPORTANTE: A imagem NÃO DEVE conter NENHUM texto, NENHUMA letra, NENHUM caracter escrito. Estilo desejado: arte digital detalhada, iluminação expressiva, cores saturadas, com um toque clássico ou de conto de fadas, mas respeitoso ao contexto bíblico.`;
 }
 
 const generateImageFromQuestionFlow = ai.defineFlow(
