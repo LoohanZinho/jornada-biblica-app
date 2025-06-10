@@ -2,10 +2,10 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation'; // Corrected import
+import { useRouter } from 'next/navigation'; 
 import type { QuizQuestionType, QuizSettings, QuizResult } from '@/types';
 import { generateQuizQuestions, type GenerateQuizQuestionsInput } from '@/ai/flows/generate-quiz-questions';
-import { sampleQuizQuestions } from '@/lib/quizData'; // For fallback
+import { sampleQuizQuestions } from '@/lib/quizData'; 
 import { QuizSetup } from '@/components/quiz/QuizSetup';
 import { QuizQuestionDisplay } from '@/components/quiz/QuizQuestionDisplay';
 import { ExplanationDialog } from '@/components/quiz/ExplanationDialog';
@@ -14,7 +14,8 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, RotateCcw } from 'lucide-react';
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
-import { useUser } from '@/hooks/useUser'; // Import useUser hook
+import { useUser } from '@/hooks/useUser';
+import { canUseFeature, recordFeatureUsage, getFeatureLimitConfig, USER_PLANS_CONFIG } from '@/lib/usageLimits';
 
 export default function QuizPage() {
   const [settings, setSettings] = useState<QuizSettings | null>(null);
@@ -31,17 +32,59 @@ export default function QuizPage() {
 
   const router = useRouter();
   const { toast } = useToast();
-  const { user, isLoading } = useUser(); // Use the hook
+  const { user, isLoading: isLoadingUser } = useUser();
 
-  // Effect to check authentication and redirect
   useEffect(() => {
-    if (!isLoading && !user) {
-      // If not loading and no user is logged in, redirect to login
-      router.push('/login');
+    if (!isLoadingUser && !user) {
+      router.push('/login?next=/quiz');
     }
-  }, [user, isLoading, router]); // Depend on user, isLoading, and router
+  }, [user, isLoadingUser, router]);
 
   const handleStartQuiz = useCallback(async (selectedSettings: QuizSettings) => {
+    if (!user) {
+      toast({
+        title: "Acesso Negado",
+        description: "Você precisa estar logado para iniciar um quiz.",
+        variant: "destructive",
+      });
+      router.push('/login?next=/quiz');
+      return;
+    }
+
+    const userPlan = user.app_metadata.plan || 'free';
+    const limitConfig = getFeatureLimitConfig(userPlan, 'quiz');
+    let actualNumberOfQuestions = selectedSettings.numberOfQuestions;
+
+    if (limitConfig) {
+      if (!canUseFeature(user.id, 'quiz', limitConfig.limit, limitConfig.period)) {
+        toast({
+          title: "Limite Diário Atingido",
+          description: `Você atingiu o limite de ${limitConfig.limit} quizzes por dia para o plano ${USER_PLANS_CONFIG[userPlan]?.name || userPlan}. Considere fazer um upgrade!`,
+          variant: "destructive",
+          duration: 7000,
+          action: (
+            <Button onClick={() => router.push('/planos')} size="sm">
+              Ver Planos
+            </Button>
+          ),
+        });
+        return;
+      }
+      
+      // Ajusta o número de perguntas para usuários 'free' se exceder o limite da funcionalidade
+      // (ex: quiz free permite max 5 perguntas mesmo que o plano de quiz diário seja 5 usos)
+      const quizFeatureLimitForFree = USER_PLANS_CONFIG.free.limits.quiz; // Assumindo que 'quiz' sempre terá um limite para free
+      if (userPlan === 'free' && quizFeatureLimitForFree && actualNumberOfQuestions > quizFeatureLimitForFree.limit) {
+         actualNumberOfQuestions = quizFeatureLimitForFree.limit;
+         toast({
+            title: "Número de Perguntas Ajustado",
+            description: `Usuários do plano Free podem jogar com no máximo ${quizFeatureLimitForFree.limit} perguntas. Ajustamos para você.`,
+            variant: "default",
+            duration: 6000,
+         });
+      }
+    }
+
     setIsLoadingQuestions(true);
     setSettings(selectedSettings);
     setCurrentQuestionIndex(0);
@@ -53,7 +96,7 @@ export default function QuizPage() {
       const aiInput: GenerateQuizQuestionsInput = {
         topic: selectedSettings.topic === "Todos os Tópicos" ? "Bíblia em geral" : selectedSettings.topic,
         difficulty: selectedSettings.difficulty === "todos" ? "médio" : selectedSettings.difficulty,
-        numberOfQuestions: selectedSettings.numberOfQuestions,
+        numberOfQuestions: actualNumberOfQuestions, // Usa o número ajustado
       };
       const response = await generateQuizQuestions(aiInput);
       
@@ -68,13 +111,13 @@ export default function QuizPage() {
         generatedQuestions = sampleQuizQuestions.filter(q => 
             (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic || aiInput.topic === "Bíblia em geral") &&
             (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty)
-        ).slice(0, selectedSettings.numberOfQuestions);
+        ).slice(0, actualNumberOfQuestions);
       }
       
       let finalQuestions = generatedQuestions.filter(q => q.question && q.options && q.correctAnswer); 
 
-      if (finalQuestions.length < selectedSettings.numberOfQuestions) {
-        const needed = selectedSettings.numberOfQuestions - finalQuestions.length;
+      if (finalQuestions.length < actualNumberOfQuestions) {
+        const needed = actualNumberOfQuestions - finalQuestions.length;
         if (needed > 0) {
             const fallbackSample = sampleQuizQuestions.filter(q => 
                 (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic || aiInput.topic === "Bíblia em geral") &&
@@ -85,7 +128,7 @@ export default function QuizPage() {
         }
       }
       
-      finalQuestions = finalQuestions.slice(0, selectedSettings.numberOfQuestions);
+      finalQuestions = finalQuestions.slice(0, actualNumberOfQuestions);
 
       if (finalQuestions.length === 0) {
          toast({
@@ -100,6 +143,10 @@ export default function QuizPage() {
       
       setQuestions(finalQuestions);
       setQuizStarted(true);
+      // Registra o uso APÓS o quiz ser configurado com sucesso
+      if (limitConfig && user) {
+        recordFeatureUsage(user.id, 'quiz', limitConfig.period);
+      }
 
     } catch (error) {
       console.error("Erro ao gerar perguntas do quiz:", error);
@@ -112,7 +159,7 @@ export default function QuizPage() {
       let fallbackQuestions = sampleQuizQuestions.filter(q => 
           (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic || (selectedSettings.topic === "Todos os Tópicos" && "Bíblia em geral")) &&
           (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty)
-      ).slice(0, selectedSettings.numberOfQuestions);
+      ).slice(0, actualNumberOfQuestions);
         
       if (fallbackQuestions.length === 0) {
            toast({
@@ -120,16 +167,19 @@ export default function QuizPage() {
               description: "Não foi possível encontrar perguntas de exemplo com os critérios selecionados.",
               variant: "destructive",
           });
-          setIsLoadingQuestions(false);
           setQuizStarted(false); 
-          return;
+      } else {
+        setQuestions(fallbackQuestions);
+        setQuizStarted(true);
+        // Registra o uso APÓS o quiz ser configurado com sucesso (mesmo com fallback)
+        if (limitConfig && user) {
+          recordFeatureUsage(user.id, 'quiz', limitConfig.period);
+        }
       }
-      setQuestions(fallbackQuestions);
-      setQuizStarted(true);
     } finally {
       setIsLoadingQuestions(false);
     }
-  }, [toast]);
+  }, [toast, user, router]);
 
   const handleAnswer = (selectedAnswer: string, isCorrect: boolean) => {
     if (isCorrect) {
@@ -151,7 +201,7 @@ export default function QuizPage() {
       correctAnswer: currentQ.correctAnswer,
       explanationContext: currentQ.explanationContext,
     });
-    setIsExplanationReady(false); // Explanation content will start loading
+    setIsExplanationReady(false); 
     setShowExplanation(true); 
   };
 
@@ -176,6 +226,14 @@ export default function QuizPage() {
     setIsLoadingQuestions(false);
   };
 
+  if (isLoadingUser) {
+     return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
+        <LoadingIndicator text="Carregando dados do usuário..." size={48} />
+      </div>
+    );
+  }
+  
   if (isLoadingQuestions) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
