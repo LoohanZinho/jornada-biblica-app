@@ -10,12 +10,12 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from "@/hooks/use-toast";
 import { processPaymentWithMercadoPago } from '@/services/mercadoPagoSupabaseService';
-import { CreditCard, Loader2, QrCode, Copy, ArrowLeft } from 'lucide-react';
+import { Lock, Loader2, QrCode, Copy, ArrowLeft, ShoppingBag } from 'lucide-react';
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
+import { Separator } from '@/components/ui/separator';
 
 interface FormData {
   itemName: string;
-  quantity: number;
   unitPrice: number;
   payerEmail: string;
 }
@@ -37,10 +37,9 @@ function CheckoutMercadoPagoContent() {
   const planPriceFromUrl = searchParams.get('planPrice');
 
   const [formData, setFormData] = useState<FormData>({
-    itemName: planNameFromUrl || 'Assinatura Jornada Bíblica',
-    quantity: 1,
-    unitPrice: planPriceFromUrl ? parseFloat(planPriceFromUrl) : 1.00,
-    payerEmail: 'seu.email@exemplo.com',
+    itemName: '',
+    unitPrice: 0,
+    payerEmail: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showPixSection, setShowPixSection] = useState(false);
@@ -50,25 +49,42 @@ function CheckoutMercadoPagoContent() {
   const isPlanFromUrl = !!(planNameFromUrl && planPriceFromUrl);
 
   useEffect(() => {
-    // Update form data if URL params change (e.g., user navigates back and selects a different plan)
     const newPlanName = searchParams.get('planName');
     const newPlanPrice = searchParams.get('planPrice');
+
     if (newPlanName && newPlanPrice) {
       setFormData(prev => ({
         ...prev,
         itemName: newPlanName,
         unitPrice: parseFloat(newPlanPrice),
-        quantity: 1, // Reset quantity for subscriptions
       }));
+    } else {
+      // Opcional: lidar com o caso de não haver plano na URL, 
+      // talvez redirecionar para /planos ou mostrar um erro.
+      // Por agora, vamos deixar o usuário preencher o email e tentar um pagamento genérico (se sua edge function suportar).
+      // Ou, melhor, se não veio de /planos, não deveria estar aqui.
+      if (!planNameFromUrl) { // Se não há nem nome do plano, é mais seguro redirecionar
+        toast({
+            title: "Plano não especificado",
+            description: "Por favor, selecione um plano primeiro.",
+            variant: "destructive",
+        });
+        router.push('/planos');
+      } else { // Se tem nome mas não preço, pode ser um item free ou erro nos params
+         setFormData(prev => ({
+            ...prev,
+            itemName: newPlanName || "Item Genérico",
+            unitPrice: 0, // Poderia ser um plano free
+         }));
+      }
     }
-  }, [searchParams]);
+  }, [searchParams, router, toast, planNameFromUrl]);
 
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.target;
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? parseFloat(value) || 0 : value,
+      payerEmail: e.target.value,
     }));
   };
 
@@ -97,10 +113,10 @@ function CheckoutMercadoPagoContent() {
     setPixQrCodeBase64(null);
     setPixCopyPaste(null);
 
-    if (formData.unitPrice <= 0 || formData.quantity <= 0) {
+    if (formData.unitPrice <= 0 && isPlanFromUrl) { // Apenas valida preço se for um plano pago da URL
         toast({
             title: "Erro de Validação",
-            description: "O preço e a quantidade devem ser maiores que zero.",
+            description: "O preço do plano deve ser maior que zero.",
             variant: "destructive",
         });
         setIsLoading(false);
@@ -120,9 +136,9 @@ function CheckoutMercadoPagoContent() {
     const paymentData = {
       items: [
         {
-          id: planNameFromUrl ? planNameFromUrl.replace(/\s+/g, '-').toLowerCase() : 'item-biblico-01',
+          id: formData.itemName.replace(/\s+/g, '-').toLowerCase() || 'item-default-01',
           title: formData.itemName,
-          quantity: formData.quantity,
+          quantity: 1, // Assumindo quantidade 1 para assinaturas
           unit_price: formData.unitPrice,
         },
       ],
@@ -179,76 +195,47 @@ function CheckoutMercadoPagoContent() {
   }
 
   return (
-    <Card className="w-full max-w-lg shadow-xl">
+    <Card className="w-full max-w-md shadow-xl mx-auto">
       {!showPixSection ? (
         <>
           <CardHeader className="text-center">
-            <CreditCard className="h-12 w-12 text-primary mx-auto mb-4" />
-            <CardTitle className="text-3xl font-headline">Pagamento</CardTitle>
-            <CardDescription>
-              {isPlanFromUrl ? `Você está assinando: ${formData.itemName}` : `Realize o pagamento de: ${formData.itemName}`}
-            </CardDescription>
+            <Lock className="h-10 w-10 text-primary mx-auto mb-3" />
+            <CardTitle className="text-2xl font-headline">Finalizar Assinatura</CardTitle>
+            {isPlanFromUrl && formData.itemName && formData.unitPrice >= 0 && (
+              <CardDescription className="text-md pt-2 text-foreground/80">
+                Você está assinando: <span className="font-semibold text-primary">{formData.itemName}</span>
+                <br />
+                Valor: <span className="font-semibold text-primary">R$ {formData.unitPrice.toFixed(2).replace('.', ',')}</span>
+              </CardDescription>
+            )}
+            {(!isPlanFromUrl || !formData.itemName) && (
+                 <CardDescription className="text-md pt-2">
+                    Carregando detalhes do plano...
+                 </CardDescription>
+            )}
           </CardHeader>
           <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="itemName">Nome do Produto</Label>
-                <Input
-                  id="itemName"
-                  name="itemName"
-                  value={formData.itemName}
-                  onChange={handleChange}
-                  required
-                  readOnly={isPlanFromUrl} 
-                  className={isPlanFromUrl ? "bg-muted/50 cursor-not-allowed" : ""}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="quantity">Quantidade</Label>
-                  <Input
-                    id="quantity"
-                    name="quantity"
-                    type="number"
-                    value={formData.quantity}
-                    onChange={handleChange}
-                    min="1"
-                    required
-                    readOnly={isPlanFromUrl}
-                    className={isPlanFromUrl ? "bg-muted/50 cursor-not-allowed" : ""}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="unitPrice">Preço Unitário (R$)</Label>
-                  <Input
-                    id="unitPrice"
-                    name="unitPrice"
-                    type="number"
-                    step="0.01"
-                    value={formData.unitPrice}
-                    onChange={handleChange}
-                    min="0.01"
-                    required
-                    readOnly={isPlanFromUrl}
-                    className={isPlanFromUrl ? "bg-muted/50 cursor-not-allowed" : ""}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="payerEmail">Seu Email para Pagamento</Label>
+            <CardContent className="space-y-6 pt-4">
+              <Separator />
+              <div className="space-y-2 pt-2">
+                <Label htmlFor="payerEmail" className="font-semibold">Seu melhor e-mail</Label>
                 <Input
                   id="payerEmail"
                   name="payerEmail"
                   type="email"
                   value={formData.payerEmail}
-                  onChange={handleChange}
+                  onChange={handleEmailChange}
                   placeholder="seu.email@exemplo.com"
                   required
+                  className="text-base h-12"
                 />
               </div>
+              <p className="text-xs text-muted-foreground text-center pt-2">
+                Você será direcionado ao ambiente seguro do Mercado Pago para escolher a forma de pagamento (PIX, Cartão, etc.).
+              </p>
             </CardContent>
-            <CardFooter>
-              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={isLoading}>
+            <CardFooter className="flex-col gap-3 pt-2">
+              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={isLoading || !formData.itemName}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -258,6 +245,11 @@ function CheckoutMercadoPagoContent() {
                   "Pagar com Mercado Pago"
                 )}
               </Button>
+              {isPlanFromUrl && (
+                  <Button onClick={() => router.push('/planos')} variant="link" className="text-sm font-normal text-muted-foreground hover:text-primary">
+                      Escolher outro plano
+                  </Button>
+              )}
             </CardFooter>
           </form>
         </>
@@ -266,53 +258,55 @@ function CheckoutMercadoPagoContent() {
           <CardHeader className="text-center">
             <QrCode className="h-12 w-12 text-primary mx-auto mb-4" />
             <CardTitle className="text-3xl font-headline">Pague com PIX</CardTitle>
-            <CardDescription>
+            <CardDescription className="text-foreground/80">
               Escaneie o QR Code abaixo com o app do seu banco ou copie o código.
             </CardDescription>
+            {formData.itemName && (
+                 <p className="text-sm text-muted-foreground pt-1">Plano: {formData.itemName} - R$ {formData.unitPrice.toFixed(2).replace('.', ',')}</p>
+            )}
           </CardHeader>
           <CardContent className="space-y-6">
             {pixQrCodeBase64 && (
-              <div className="flex justify-center">
+              <div className="flex justify-center p-2 bg-white rounded-md shadow-md max-w-[200px] mx-auto">
                 <Image 
                   src={pixQrCodeBase64} 
                   alt="QR Code PIX" 
-                  width={256} 
-                  height={256} 
-                  className="rounded-md shadow-md"
-                  data-ai-hint="pix qrcode" 
+                  width={180} 
+                  height={180}
+                  data-ai-hint="pix qrcode"
                 />
               </div>
             )}
             {pixCopyPaste && (
               <div className="space-y-2">
-                <Label htmlFor="pixCopyPasteCode">PIX Copia e Cola:</Label>
+                <Label htmlFor="pixCopyPasteCode" className="font-semibold">PIX Copia e Cola:</Label>
                 <div className="flex items-center space-x-2">
                   <Input
                     id="pixCopyPasteCode"
                     type="text"
                     value={pixCopyPaste}
                     readOnly
-                    className="bg-muted/50 text-sm flex-grow"
+                    className="bg-muted/50 text-sm flex-grow h-11"
                   />
-                  <Button variant="outline" size="icon" onClick={handleCopyToClipboard} title="Copiar Código PIX">
-                    <Copy className="h-4 w-4" />
+                  <Button variant="outline" size="icon" onClick={handleCopyToClipboard} title="Copiar Código PIX" className="h-11 w-11">
+                    <Copy className="h-5 w-5" />
                   </Button>
                 </div>
               </div>
             )}
             <p className="text-xs text-muted-foreground text-center">
               Após o pagamento, a confirmação pode levar alguns instantes.
-              (Lembre-se: a verificação automática de pagamento não está implementada nesta etapa).
+              (A verificação automática de pagamento não está implementada nesta etapa.)
             </p>
           </CardContent>
-          <CardFooter className="flex flex-col gap-2">
+          <CardFooter className="flex flex-col gap-3">
              <Button onClick={handleBackToForm} variant="outline" className="w-full">
               <ArrowLeft className="mr-2 h-4 w-4"/>
-              Alterar Dados ou Método
+              Alterar E-mail ou Método
             </Button>
             {isPlanFromUrl && (
-                <Button onClick={() => router.push('/planos')} variant="link" className="w-full text-primary hover:text-primary/80">
-                    Voltar para Planos
+                <Button onClick={() => router.push('/planos')} variant="link" className="w-full text-sm font-normal text-muted-foreground hover:text-primary">
+                    Ver outros Planos
                 </Button>
             )}
           </CardFooter>
@@ -324,10 +318,12 @@ function CheckoutMercadoPagoContent() {
 
 export default function CheckoutMercadoPagoPage() {
   return (
-    <div className="flex justify-center items-start py-8 animate-fade-in">
-       <Suspense fallback={<div className="flex justify-center items-center h-64"><LoadingIndicator text="Carregando dados..." /></div>}>
+    <div className="flex justify-center items-start py-8 md:py-12 animate-fade-in">
+       <Suspense fallback={<div className="flex justify-center items-center h-screen"><LoadingIndicator text="Carregando checkout..." /></div>}>
         <CheckoutMercadoPagoContent />
       </Suspense>
     </div>
   );
 }
+
+    
