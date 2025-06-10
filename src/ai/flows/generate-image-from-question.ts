@@ -26,13 +26,14 @@ export async function generateImageFromQuestion(input: GenerateImageFromQuestion
 }
 
 const imageGenerationPromptForModel = (questionText: string) => {
-  const maxLength = 350; 
-  let effectivePrompt = questionText;
+  const maxLength = 300; // Reduzido um pouco para dar mais espaço ao estilo
+  let effectiveQuestionText = questionText;
   if (questionText.length > maxLength ) {
-    effectivePrompt = questionText.substring(0, maxLength - 3) + "...";
+    effectiveQuestionText = questionText.substring(0, maxLength - 3) + "...";
   }
   
-  return `O foco principal é ilustrar: "${effectivePrompt}". Para o estilo, considere uma cena dos tempos bíblicos, durante a era de Jesus Cristo, mostrando pessoas em trajes tradicionais hebreus antigos. Inclua elementos como paisagens desérticas, oliveiras, casas de pedra, sandálias, potes de barro e vestes de linho. A imagem deve ser vibrante, com cores ricas e composição clara. Foco narrativo. SEM TEXTO. Estilo: arte digital detalhada, iluminação expressiva, respeitoso ao contexto bíblico.`;
+  // Combina o estilo com o texto da pergunta
+  return `No estilo artístico dos tempos bíblicos antigos, durante a vida de Jesus Cristo. Todos os personagens devem usar roupas tradicionais do Oriente Médio do primeiro século, com tecidos naturais como linho e lã. Ilustre vividamente o seguinte conceito ou cena: "${effectiveQuestionText}". A imagem deve ter cores ricas, composição clara e foco narrativo. SEM TEXTO na imagem. Estilo: arte digital detalhada, iluminação expressiva, respeitoso ao contexto bíblico.`;
 }
 
 const generateImageFromQuestionFlow = ai.defineFlow(
