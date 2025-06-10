@@ -100,6 +100,7 @@ function CheckoutMercadoPagoContent() {
     setIsPixGenerated(false);
     setPixQrCodeBase64(null);
     setPixCopyPaste(null);
+    // Campos de formulário já se tornarão editáveis porque `readOnly` depende de `isPixGenerated`
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -215,7 +216,7 @@ function CheckoutMercadoPagoContent() {
             Valor: <span className="font-semibold text-primary">R$ {formData.unitPrice.toFixed(2).replace('.', ',')}</span>
           </CardDescription>
         )}
-         {isPlanFromUrl && formData.itemName && formData.unitPrice === 0 && ( // Caso de plano gratuito
+         {isPlanFromUrl && formData.itemName && formData.unitPrice === 0 && ( 
           <CardDescription className="text-md pt-2 text-foreground/80">
             Você está acessando: <span className="font-semibold text-primary">{formData.itemName}</span> (Gratuito)
              <br />
