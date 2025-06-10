@@ -300,7 +300,7 @@ function CheckoutMercadoPagoContent() {
         </CardContent>
       </form>
 
-      {pixQrCodeBase64 && pixCopyPaste && (
+      {isPixGenerated && pixQrCodeBase64 && pixCopyPaste && (
         <div ref={pixSectionRef}>
             <CardContent className="space-y-6 pt-8 border-t mt-6">
                 <div className="text-center">
