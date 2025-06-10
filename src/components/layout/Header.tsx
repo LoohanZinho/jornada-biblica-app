@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { AppLogo } from '@/components/icons/AppLogo';
 import { Button } from '@/components/ui/button';
-import { Menu, Home, ListChecks, BookOpenText, MessageSquareQuote, Quote, CheckSquare, LayoutList } from 'lucide-react'; // Adicionado LayoutList
+import { Menu, Home, ListChecks, BookOpenText, MessageSquareQuote, Quote, CheckSquare, LayoutList } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 const navItems = [
@@ -12,7 +12,7 @@ const navItems = [
   { href: '/who-said-this', label: 'Quem Disse Isso?', icon: <Quote className="h-5 w-5" /> },
   { href: '/true-false-quiz', label: 'Verdadeiro ou Falso?', icon: <CheckSquare className="h-5 w-5" /> },
   { href: '/daily-verse', label: 'Versículo do Dia', icon: <BookOpenText className="h-5 w-5" /> },
-  { href: '/planos', label: 'Aqui é pra ser os planos', icon: <LayoutList className="h-5 w-5" /> }, // Texto e ícone atualizados
+  { href: '/planos', label: 'Planos', icon: <LayoutList className="h-5 w-5" /> },
 ];
 
 export function Header() {
