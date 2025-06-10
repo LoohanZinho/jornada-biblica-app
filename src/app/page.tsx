@@ -70,7 +70,7 @@ export default function HomePage() {
 
       <section className="w-full">
         <h2 className="text-3xl font-bold text-center mb-10 text-primary/90">Explore os Recursos</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"> {/* Alterado para lg:grid-cols-3 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {featureCards.map((card, index) => (
             <Card key={card.title} className="shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col animate-slide-in-from-bottom" style={{animationDelay: `${index * 100}ms`}}>
               <CardHeader className="items-center text-center">
