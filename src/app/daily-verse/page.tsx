@@ -86,10 +86,6 @@ export default async function DailyVersePage() {
                 <LoadingIndicator text="Gerando reflexão..." />
               </div>
             )}
-             <p className="text-muted-foreground text-xs font-body leading-relaxed pt-2">
-              Esta reflexão é gerada por IA e serve como um ponto de partida para sua meditação pessoal.
-              No futuro, esta seção será enriquecida com mais contexto histórico e conexões bíblicas.
-            </p>
           </div>
         </CardContent>
       </Card>
