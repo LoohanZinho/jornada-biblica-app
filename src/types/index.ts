@@ -1,4 +1,32 @@
 
+export interface UserPlan {
+  planId: 'free' | 'peregrino_digital' | 'mestre_escrituras';
+  name: string;
+  usageLimits: {
+    quizPerDay?: number;
+    guessTheTextPerDay?: number;
+    whoSaidThisPerDay?: number;
+    trueFalsePerDay?: number;
+    personalizedPrayersPerWeek?: number;
+  }
+}
+
+// Adicionando plan ao UserAppMetadata para simular
+export interface UserAppMetadata {
+  full_name?: string;
+  avatar_url?: string;
+  plan?: UserPlan['planId']; // 'free', 'peregrino_digital', etc.
+}
+
+// Supabase User interface (simplificada, adicione o que precisar)
+export interface SupabaseUser {
+  id: string;
+  email?: string;
+  app_metadata: UserAppMetadata;
+  // Outros campos relevantes do usuário do Supabase
+}
+
+
 export interface QuizQuestionType {
   id: string;
   question: string; 
@@ -93,4 +121,9 @@ export interface TrueFalseResultType {
   correctAnswer: boolean; // Resposta correta
   isCorrect: boolean;
   explanation: string;
+}
+
+// Para uso com o hook useUser e simulação de plano
+export interface AppUser extends Omit<SupabaseUser, 'app_metadata'> {
+   app_metadata: UserAppMetadata;
 }
