@@ -22,7 +22,7 @@ export default function CheckoutMercadoPagoPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [formData, setFormData] = useState<FormData>({
-    itemName: 'Produto de Teste Bíblico',
+    itemName: 'Assinatura Jornada Bíblica', // Nome do item atualizado aqui
     quantity: 1,
     unitPrice: 10.50,
     payerEmail: 'comprador.teste@email.com',
