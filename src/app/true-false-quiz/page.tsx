@@ -3,6 +3,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import type { TrueFalseQuestionType, QuizSettings, TrueFalseResultType } from '@/types';
 import { generateTrueFalseQuestions, type GenerateTrueFalseQuestionsInput } from '@/ai/flows/generate-true-false-questions';
 import { sampleTrueFalseQuestions } from '@/lib/trueFalseQuizData'; 
@@ -16,6 +17,7 @@ import { LoadingIndicator } from '@/components/common/LoadingIndicator';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
+import { useUser } from '@/hooks/useUser';
 interface CurrentResolutionData {
   statement: string;
   selectedAnswer: boolean;
@@ -37,6 +39,7 @@ export default function TrueFalseQuizPage() {
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
 
   const router = useRouter();
+  const { user, isLoading } = useUser();
   const { toast } = useToast();
 
   const handleStartGame = useCallback(async (selectedSettings: QuizSettings) => {
@@ -179,6 +182,13 @@ export default function TrueFalseQuizPage() {
     setShowResolutionCard(false);
     setCurrentResolutionData(null);
   };
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isLoading, router]);
+
 
   if (isLoadingQuestions) {
     return (

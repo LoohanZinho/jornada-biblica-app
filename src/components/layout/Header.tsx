@@ -4,10 +4,10 @@
 import Link from 'next/link';
 import { AppLogo } from '@/components/icons/AppLogo';
 import { Button } from '@/components/ui/button';
-import { Menu, Home, ListChecks, BookOpenText, MessageSquareQuote, Quote, CheckSquare, LayoutList, User as UserIconLucide, LogOut } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Menu, Home, ListChecks, BookOpenText, MessageSquareQuote, Quote, CheckSquare, LayoutList, User as UserIconLucide, LogOut, Star } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { useUser } from '@/hooks/useUser';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,13 +29,13 @@ const baseNavItems = [
 ];
 
 export function Header() {
-  const { user, signOut } = useUser();
+  const { user, signOut, isLoading } = useUser();
   const router = useRouter();
 
   const handleSignOut = async () => {
     await signOut();
     router.push('/');
-    router.refresh(); 
+    router.refresh();
   };
 
   const getInitials = (email?: string | null, name?: string | null) => {
@@ -64,18 +64,17 @@ export function Header() {
     if (email && email.length >= 2) {
       return email.substring(0, 2).toUpperCase();
     }
-    return 'JB'; 
+    return 'JB';
   };
-  
+
   const currentNavItems = [...baseNavItems];
   const mobileNavItems = [...baseNavItems];
   if (user) {
     mobileNavItems.push({ href: '/profile', label: 'Meu Perfil', icon: <UserIconLucide className="h-5 w-5" /> });
   }
 
-
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
+ <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-8 flex items-center gap-2" aria-label="Página Inicial da Jornada Bíblica">
           <AppLogo />
@@ -122,7 +121,17 @@ export function Header() {
                     Perfil
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                {user && (
+                  <>
+                    <DropdownMenuItem asChild >
+                      <Link href="/planos" className="flex items-center w-full">
+                        <Star className="mr-2 h-4 w-4 text-yellow-500" />
+                        Upgrade
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   Sair
@@ -168,6 +177,17 @@ export function Header() {
                     </Link>
                   </SheetClose>
                 ))}
+                 {user && (
+                   <SheetClose asChild key="upgrade-mobile">
+                     <Link
+                       href="/planos"
+                       className="flex items-center gap-3 rounded-md px-3 py-3 text-lg font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+                     >
+                       <Star className="mr-3 h-5 w-5 text-yellow-500" />
+                       Upgrade
+                      </Link>
+                   </SheetClose>
+                 )}
               </nav>
               <div className="mt-auto pt-6 border-t">
                 {user ? (

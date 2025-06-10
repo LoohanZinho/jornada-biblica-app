@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation'; // Corrected import
 import type { QuizQuestionType, QuizSettings, QuizResult } from '@/types';
 import { generateQuizQuestions, type GenerateQuizQuestionsInput } from '@/ai/flows/generate-quiz-questions';
 import { sampleQuizQuestions } from '@/lib/quizData'; // For fallback
@@ -14,6 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, RotateCcw } from 'lucide-react';
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
+import { useUser } from '@/hooks/useUser'; // Import useUser hook
 
 export default function QuizPage() {
   const [settings, setSettings] = useState<QuizSettings | null>(null);
@@ -30,6 +31,15 @@ export default function QuizPage() {
 
   const router = useRouter();
   const { toast } = useToast();
+  const { user, isLoading } = useUser(); // Use the hook
+
+  // Effect to check authentication and redirect
+  useEffect(() => {
+    if (!isLoading && !user) {
+      // If not loading and no user is logged in, redirect to login
+      router.push('/login');
+    }
+  }, [user, isLoading, router]); // Depend on user, isLoading, and router
 
   const handleStartQuiz = useCallback(async (selectedSettings: QuizSettings) => {
     setIsLoadingQuestions(true);

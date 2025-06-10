@@ -11,6 +11,7 @@
  */
 
 import {ai} from '@/ai/genkit';
+import { supabase } from '@/lib/supabaseClient';
 import {z} from 'genkit';
 
 const GeneratePersonalizedPrayerInputSchema = z.object({
@@ -39,7 +40,13 @@ export type GeneratePersonalizedPrayerOutput = z.infer<
 export async function generatePersonalizedPrayer(
   input: GeneratePersonalizedPrayerInput
 ): Promise<GeneratePersonalizedPrayerOutput> {
-  return generatePersonalizedPrayerFlow(input);
+  const { data: { session }, error } = await supabase.auth.getSession();
+
+  if (error || !session?.user) {
+    throw new Error("É necessário estar logado para gerar orações personalizadas.");
+  }
+
+  return generatePersonalizedPrayerFlow(input); // Only proceed if user is logged in
 }
 
 const prompt = ai.definePrompt({

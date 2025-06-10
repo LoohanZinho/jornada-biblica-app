@@ -3,7 +3,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { GuessTheTextQuestionType, QuizSettings, GuessTheTextResult } from '@/types';
+import type { GuessTheTextQuestionType, QuizSettings, GuessTheTextResult, User } from '@/types';
 import { generateGuessTheTextQuestions, type GenerateGuessTheTextQuestionsInput } from '@/ai/flows/generate-guess-the-text-questions';
 import { sampleGuessTheTextQuestions } from '@/lib/guessTheTextData'; // For fallback
 import { GuessTheTextSetup } from '@/components/game/GuessTheTextSetup';
@@ -16,6 +16,7 @@ import { LoadingIndicator } from '@/components/common/LoadingIndicator';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { BookOpenCheck, CheckCircle2, Home, XCircle } from 'lucide-react';
+import { useUser } from '@/hooks/useUser';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function GuessTheTextPage() {
@@ -30,8 +31,16 @@ export default function GuessTheTextPage() {
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
 
   const router = useRouter();
+  const { user, isLoading } = useUser();
   const { toast } = useToast();
 
+  // Redirect if user is not logged in and loading is complete
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isLoading, router]);
+  
   const handleStartGame = useCallback(async (selectedSettings: QuizSettings) => {
     setIsLoadingQuestions(true);
     setSettings(selectedSettings);

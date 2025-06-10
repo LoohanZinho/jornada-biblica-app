@@ -1,7 +1,5 @@
 
 "use client";
-
-import React, { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { WhoSaidThisQuestionType, QuizSettings, WhoSaidThisResultType } from '@/types';
 import { generateWhoSaidThisQuestions, type GenerateWhoSaidThisQuestionsInput } from '@/ai/flows/generate-who-said-this-questions';
@@ -14,7 +12,9 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, RotateCcw, BookOpenCheck, QuoteIcon, CheckCircle2, XCircle } from 'lucide-react';
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useCallback, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useUser } from '@/hooks/useUser';
 
 interface CurrentQuoteResolutionData {
   quote: string;
@@ -36,9 +36,17 @@ export default function WhoSaidThisPage() {
   const [showQuoteResolutionCard, setShowQuoteResolutionCard] = useState(false);
   const [currentQuoteResolutionData, setCurrentQuoteResolutionData] = useState<CurrentQuoteResolutionData | null>(null);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
+  
+  const { user, isLoading } = useUser();
 
   const router = useRouter();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isLoading, router]);
 
   const handleStartGame = useCallback(async (selectedSettings: QuizSettings) => {
     setIsLoadingQuestions(true);
