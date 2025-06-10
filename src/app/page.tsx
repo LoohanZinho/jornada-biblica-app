@@ -6,10 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { ListChecks, BookOpenText, Award, HeartHandshake, Bird, MessageSquareQuote, Quote, CheckSquare } from 'lucide-react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { useUser } from '@/hooks/useUser';
-import { useEffect, useState } from 'react';
-import { LoadingIndicator } from '@/components/common/LoadingIndicator';
 
 const featureCards = [
   {
@@ -50,35 +46,14 @@ const featureCards = [
    {
     title: 'Orações Personalizadas',
     description: 'Gere orações e reflexões baseadas em sua jornada espiritual e no seu desempenho.',
-    href: '/quiz/results', 
+    href: '/quiz/results',
     icon: <HeartHandshake className="h-10 w-10 text-primary mb-4" />,
     cta: 'Descobrir Orações',
   },
 ];
 
 export default function HomePage() {
-  const { user, isLoading: isUserLoading } = useUser();
-  const router = useRouter();
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-
-  useEffect(() => {
-    if (!isUserLoading) {
-      if (!user) {
-        router.push('/login');
-      } else {
-        setIsCheckingAuth(false);
-      }
-    }
-  }, [user, isUserLoading, router]);
-
-  if (isUserLoading || isCheckingAuth) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
-        <LoadingIndicator text="Carregando sua jornada..." size={48} />
-      </div>
-    );
-  }
-
+  // Removed user authentication checks to make the page public
   return (
     <div className="flex flex-col items-center space-y-12 animate-fade-in">
       <section className="text-center py-12 md:py-20 w-full bg-card rounded-xl shadow-lg">
