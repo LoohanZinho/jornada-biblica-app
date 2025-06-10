@@ -1,13 +1,34 @@
 
 import { getRandomVerse } from '@/lib/dailyVerses';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { BookOpenText, MessageCircle } from 'lucide-react';
+import { BookOpenText, MessageCircle, AlertTriangle } from 'lucide-react';
 import type { DailyVerse as DailyVerseType } from '@/types';
 import { DailyVerseImage } from '@/components/daily-verse/DailyVerseImage';
 import { Separator } from '@/components/ui/separator';
+import { generateDailyVerseCommentary } from '@/ai/flows/generate-daily-verse-commentary';
+import { LoadingIndicator } from '@/components/common/LoadingIndicator';
 
-export default function DailyVersePage() {
+async function getVerseAndCommentary() {
   const verse: DailyVerseType = getRandomVerse();
+  let commentary: string | null = null;
+  let commentaryError: string | null = null;
+
+  try {
+    const commentaryResponse = await generateDailyVerseCommentary({
+      verseText: verse.text,
+      verseReference: verse.reference,
+    });
+    commentary = commentaryResponse.commentary;
+  } catch (error) {
+    console.error("Erro ao gerar comentário para o versículo diário:", error);
+    commentaryError = "Não foi possível carregar o comentário para este versículo no momento.";
+  }
+  return { verse, commentary, commentaryError };
+}
+
+export default async function DailyVersePage() {
+  const { verse, commentary, commentaryError } = await getVerseAndCommentary();
+  
   const imagePrompt = verse.theme || verse.text.substring(0, 100) + (verse.text.length > 100 ? "..." : "");
   const imageHintForPlaceholder = verse.theme?.toLowerCase().split(' ')[0] || verse.reference.split(' ')[0].toLowerCase() || "scripture";
 
@@ -44,22 +65,31 @@ export default function DailyVersePage() {
               Reflexão Sobre o Versículo
             </h3>
             {verse.theme && (
-              <p className="text-foreground/90 font-body">
+              <p className="text-foreground/90 font-body text-sm">
                 <strong className="font-semibold">Tema principal:</strong> {verse.theme}
               </p>
             )}
-            <p className="text-muted-foreground text-sm font-body leading-relaxed">
-              Medite sobre como este versículo se aplica à sua vida hoje.
-              Esta seção será enriquecida no futuro com comentários detalhados, contexto histórico
-              e conexões com outras passagens bíblicas relevantes para aprofundar seu entendimento.
+            
+            {commentary && (
+              <p className="text-foreground/90 font-body leading-relaxed text-sm p-4 bg-muted/50 rounded-md shadow-sm">
+                {commentary}
+              </p>
+            )}
+            {commentaryError && (
+              <div className="p-4 bg-destructive/10 rounded-md text-destructive flex items-center gap-2 text-sm">
+                <AlertTriangle className="h-5 w-5" />
+                {commentaryError}
+              </div>
+            )}
+            {!commentary && !commentaryError && (
+              <div className="p-4 bg-muted/50 rounded-md text-sm">
+                <LoadingIndicator text="Gerando reflexão..." />
+              </div>
+            )}
+             <p className="text-muted-foreground text-xs font-body leading-relaxed pt-2">
+              Esta reflexão é gerada por IA e serve como um ponto de partida para sua meditação pessoal.
+              No futuro, esta seção será enriquecida com mais contexto histórico e conexões bíblicas.
             </p>
-            {/*
-              TODO: No futuro, integrar IA aqui para gerar:
-              - Explicação mais detalhada do versículo.
-              - Contexto histórico e cultural.
-              - Referências a outros versículos relacionados.
-              - Aplicações práticas.
-            */}
           </div>
         </CardContent>
       </Card>
