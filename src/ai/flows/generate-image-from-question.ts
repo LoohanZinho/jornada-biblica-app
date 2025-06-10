@@ -32,8 +32,7 @@ const imageGenerationPromptForModel = (questionText: string) => {
     effectivePrompt = questionText.substring(0, maxLength - 3) + "...";
   }
   
-  // Prompt simplificado
-  return `Gere uma ilustração de alta qualidade para o tema bíblico: "${effectivePrompt}". A imagem deve ser vibrante, com cores ricas e composição clara. Foco narrativo. SEM TEXTO. Estilo: arte digital detalhada, iluminação expressiva, respeitoso ao contexto bíblico.`;
+  return `Gere uma ilustração de alta qualidade para o tema bíblico: "${effectivePrompt}". A cena deve ser ambientada nos tempos bíblicos, durante a era de Jesus Cristo, mostrando pessoas em trajes tradicionais hebreus antigos. Inclua elementos como paisagens desérticas, oliveiras, casas de pedra, sandálias, potes de barro e vestes de linho. A imagem deve ser vibrante, com cores ricas e composição clara. Foco narrativo. SEM TEXTO. Estilo: arte digital detalhada, iluminação expressiva, respeitoso ao contexto bíblico.`;
 }
 
 const generateImageFromQuestionFlow = ai.defineFlow(
