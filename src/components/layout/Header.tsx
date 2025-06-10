@@ -1,11 +1,24 @@
 
+"use client";
+
 import Link from 'next/link';
 import { AppLogo } from '@/components/icons/AppLogo';
 import { Button } from '@/components/ui/button';
-import { Menu, Home, ListChecks, BookOpenText, MessageSquareQuote, Quote, CheckSquare, LayoutList } from 'lucide-react';
+import { Menu, Home, ListChecks, BookOpenText, MessageSquareQuote, Quote, CheckSquare, LayoutList, User as UserIconLucide, LogOut } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { useUser } from '@/hooks/useUser';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useRouter } from 'next/navigation';
 
-const navItems = [
+const baseNavItems = [
   { href: '/', label: 'Início', icon: <Home className="h-5 w-5" /> },
   { href: '/quiz', label: 'Quiz Bíblico', icon: <ListChecks className="h-5 w-5" /> },
   { href: '/guess-the-text', label: 'Qual é o Texto?', icon: <MessageSquareQuote className="h-5 w-5" /> },
@@ -16,6 +29,37 @@ const navItems = [
 ];
 
 export function Header() {
+  const { user, signOut } = useUser();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/');
+    router.refresh(); // Força uma atualização para garantir que o estado do header mude
+  };
+
+  const getInitials = (email?: string | null, name?: string | null) => {
+    if (name) {
+      const parts = name.split(' ');
+      if (parts.length > 1 && parts[0] && parts[parts.length - 1]) {
+        return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+      }
+      if (parts[0] && parts[0].length >=2) return parts[0].substring(0, 2).toUpperCase();
+      if (parts[0]) return parts[0][0].toUpperCase();
+    }
+    if (email && email.length >= 2) {
+      return email.substring(0, 2).toUpperCase();
+    }
+    return 'JB'; // Jornada Bíblica fallback
+  };
+  
+  const currentNavItems = [...baseNavItems];
+  const mobileNavItems = [...baseNavItems];
+  if (user) {
+    mobileNavItems.push({ href: '/profile', label: 'Meu Perfil', icon: <UserIconLucide className="h-5 w-5" /> });
+  }
+
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
       <div className="container flex h-16 items-center">
@@ -24,7 +68,7 @@ export function Header() {
           <span className="font-headline text-xl font-bold text-primary">Jornada Bíblica</span>
         </Link>
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-          {navItems.map((item) => (
+          {currentNavItems.map((item) => (
             <Link
               key={item.label}
               href={item.href}
@@ -35,7 +79,53 @@ export function Header() {
             </Link>
           ))}
         </nav>
-        <div className="flex flex-1 items-center justify-end space-x-4">
+        <div className="flex flex-1 items-center justify-end space-x-2 md:space-x-4">
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
+                  <Avatar className="h-9 w-9">
+                    {/* <AvatarImage src={user.user_metadata?.avatar_url || undefined} alt={user.user_metadata?.full_name || user.email || 'User Avatar'} /> */}
+                    <AvatarFallback>{getInitials(user.email, user.user_metadata?.full_name)}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {user.user_metadata?.full_name || 'Usuário'}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/profile" className="flex items-center cursor-pointer w-full">
+                    <UserIconLucide className="mr-2 h-4 w-4" />
+                    Perfil
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+             <div className="hidden md:flex items-center space-x-2">
+                <Button asChild variant="ghost" size="sm">
+                    <Link href="/login">Login</Link>
+                </Button>
+                <Button asChild size="sm">
+                    <Link href="/signup">Criar Conta</Link>
+                </Button>
+            </div>
+          )}
+
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden text-primary">
@@ -43,7 +133,7 @@ export function Header() {
                 <span className="sr-only">Abrir Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[360px] bg-background p-6">
+            <SheetContent side="right" className="w-[300px] sm:w-[360px] bg-background p-6 flex flex-col">
               <SheetHeader className="mb-6 text-left">
                 <SheetTitle asChild>
                   <Link href="/" className="flex items-center gap-2">
@@ -52,8 +142,8 @@ export function Header() {
                   </Link>
                 </SheetTitle>
               </SheetHeader>
-              <nav className="flex flex-col space-y-1">
-                {navItems.map((item) => (
+              <nav className="flex flex-col space-y-1 flex-grow">
+                {mobileNavItems.map((item) => (
                   <SheetClose asChild key={item.label}>
                     <Link
                       href={item.href}
@@ -65,6 +155,32 @@ export function Header() {
                   </SheetClose>
                 ))}
               </nav>
+              <div className="mt-auto pt-6 border-t">
+                {user ? (
+                    <SheetClose asChild>
+                        <Button onClick={handleSignOut} variant="outline" className="w-full justify-start text-lg py-3">
+                            <LogOut className="mr-3 h-5 w-5" />Sair da Conta
+                        </Button>
+                    </SheetClose>
+                ) : (
+                    <div className="space-y-2">
+                        <SheetClose asChild>
+                             <Link href="/login" className="w-full">
+                                <Button variant="ghost" className="w-full justify-start text-lg py-3">
+                                    <UserIconLucide className="mr-3 h-5 w-5" />Fazer Login
+                                </Button>
+                            </Link>
+                        </SheetClose>
+                        <SheetClose asChild>
+                            <Link href="/signup" className="w-full">
+                                <Button variant="default" className="w-full justify-start text-lg py-3">
+                                    <UserIconLucide className="mr-3 h-5 w-5" />Criar Conta
+                                </Button>
+                            </Link>
+                        </SheetClose>
+                    </div>
+                )}
+              </div>
             </SheetContent>
           </Sheet>
         </div>
