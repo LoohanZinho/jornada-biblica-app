@@ -49,11 +49,11 @@ export default function DailyVersePage() {
               </p>
             )}
             <p className="text-muted-foreground text-sm font-body leading-relaxed">
-              Medite sobre como este versículo se aplica à sua vida hoje. 
-              Esta seção será enriquecida no futuro com comentários detalhados, contexto histórico 
+              Medite sobre como este versículo se aplica à sua vida hoje.
+              Esta seção será enriquecida no futuro com comentários detalhados, contexto histórico
               e conexões com outras passagens bíblicas relevantes para aprofundar seu entendimento.
             </p>
-            {/* 
+            {/*
               TODO: No futuro, integrar IA aqui para gerar:
               - Explicação mais detalhada do versículo.
               - Contexto histórico e cultural.
