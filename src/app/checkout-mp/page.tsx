@@ -10,13 +10,14 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from "@/hooks/use-toast";
 import { processPaymentWithMercadoPago } from '@/services/mercadoPagoSupabaseService';
-import { Lock, Loader2, QrCode, Copy, ArrowLeft, ShoppingBag } from 'lucide-react';
+import { Lock, Loader2, QrCode, Copy, ArrowLeft, User, Mail, ShoppingBag } from 'lucide-react';
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
 import { Separator } from '@/components/ui/separator';
 
 interface FormData {
   itemName: string;
   unitPrice: number;
+  payerName: string;
   payerEmail: string;
 }
 
@@ -37,12 +38,12 @@ function CheckoutMercadoPagoContent() {
   const planPriceFromUrl = searchParams.get('planPrice');
 
   const [formData, setFormData] = useState<FormData>({
-    itemName: '',
+    itemName: 'Assinatura Jornada Bíblica', // Valor padrão caso não venha da URL
     unitPrice: 0,
+    payerName: '',
     payerEmail: '',
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [showPixSection, setShowPixSection] = useState(false);
   const [pixQrCodeBase64, setPixQrCodeBase64] = useState<string | null>(null);
   const [pixCopyPaste, setPixCopyPaste] = useState<string | null>(null);
 
@@ -58,33 +59,21 @@ function CheckoutMercadoPagoContent() {
         itemName: newPlanName,
         unitPrice: parseFloat(newPlanPrice),
       }));
-    } else {
-      // Opcional: lidar com o caso de não haver plano na URL, 
-      // talvez redirecionar para /planos ou mostrar um erro.
-      // Por agora, vamos deixar o usuário preencher o email e tentar um pagamento genérico (se sua edge function suportar).
-      // Ou, melhor, se não veio de /planos, não deveria estar aqui.
-      if (!planNameFromUrl) { // Se não há nem nome do plano, é mais seguro redirecionar
-        toast({
-            title: "Plano não especificado",
-            description: "Por favor, selecione um plano primeiro.",
-            variant: "destructive",
-        });
-        router.push('/planos');
-      } else { // Se tem nome mas não preço, pode ser um item free ou erro nos params
-         setFormData(prev => ({
+    } else if (newPlanName) { // Apenas nome do plano, sem preço (pode ser um item free ou erro)
+        setFormData(prev => ({
             ...prev,
-            itemName: newPlanName || "Item Genérico",
-            unitPrice: 0, // Poderia ser um plano free
-         }));
-      }
+            itemName: newPlanName,
+            unitPrice: 0, // Definir como 0 ou algum valor padrão
+        }));
     }
-  }, [searchParams, router, toast, planNameFromUrl]);
+    // Se não houver parâmetros de plano, mantém os valores padrão de itemName e unitPrice.
+  }, [searchParams]);
 
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      payerEmail: e.target.value,
+      [name]: value,
     }));
   };
 
@@ -109,11 +98,10 @@ function CheckoutMercadoPagoContent() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    setShowPixSection(false);
-    setPixQrCodeBase64(null);
-    setPixCopyPaste(null);
+    // Não resetar pixQrCodeBase64 e pixCopyPaste aqui para mantê-los visíveis após a tentativa.
+    // Eles serão resetados se o usuário alterar os dados e submeter novamente.
 
-    if (formData.unitPrice <= 0 && isPlanFromUrl) { // Apenas valida preço se for um plano pago da URL
+    if (formData.unitPrice <= 0 && isPlanFromUrl) {
         toast({
             title: "Erro de Validação",
             description: "O preço do plano deve ser maior que zero.",
@@ -123,6 +111,16 @@ function CheckoutMercadoPagoContent() {
         return;
     }
     
+    if (!formData.payerName.trim()) {
+        toast({
+            title: "Nome Inválido",
+            description: "Por favor, insira seu nome completo.",
+            variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+    }
+
     if (!formData.payerEmail || !/\S+@\S+\.\S+/.test(formData.payerEmail)) {
       toast({
           title: "Email Inválido",
@@ -132,17 +130,26 @@ function CheckoutMercadoPagoContent() {
       setIsLoading(false);
       return;
     }
+    
+    // Resetar PIX anterior se o usuário reenviar o formulário
+    setPixQrCodeBase64(null);
+    setPixCopyPaste(null);
 
     const paymentData = {
       items: [
         {
-          id: formData.itemName.replace(/\s+/g, '-').toLowerCase() || 'item-default-01',
+          id: formData.itemName.replace(/\s+/g, '-').toLowerCase() || 'item-default',
           title: formData.itemName,
-          quantity: 1, // Assumindo quantidade 1 para assinaturas
+          quantity: 1,
           unit_price: formData.unitPrice,
         },
       ],
       payerEmail: formData.payerEmail,
+      // Passando nome e sobrenome separados, como geralmente a API do MP espera
+      payerFirstName: formData.payerName.split(' ')[0] || '',
+      payerLastName: formData.payerName.substring(formData.payerName.indexOf(' ') + 1).trim() || '',
+      // Se a API do MP aceitar payerFullName, pode ser mais simples:
+      // payerFullName: formData.payerName,
     };
 
     try {
@@ -151,7 +158,6 @@ function CheckoutMercadoPagoContent() {
       if (response.qr_code_base64 && response.qr_code) {
         setPixQrCodeBase64(response.qr_code_base64);
         setPixCopyPaste(response.qr_code);
-        setShowPixSection(true);
         toast({
           title: "QR Code PIX Gerado",
           description: "Escaneie o QR Code ou copie o código para pagar.",
@@ -163,7 +169,6 @@ function CheckoutMercadoPagoContent() {
         });
         window.location.href = response.init_point;
       } else if (response.error) {
-        console.error("Erro do Mercado Pago Supabase Service:", response.error);
         toast({
           title: "Erro ao Iniciar Pagamento",
           description: response.error,
@@ -177,7 +182,6 @@ function CheckoutMercadoPagoContent() {
         });
       }
     } catch (error) {
-      console.error("Erro ao processar pagamento:", error);
       toast({
         title: "Erro Crítico",
         description: `Ocorreu um erro inesperado: ${(error as Error).message}`,
@@ -188,130 +192,134 @@ function CheckoutMercadoPagoContent() {
     }
   };
 
-  const handleBackToForm = () => {
-    setShowPixSection(false);
-    setPixQrCodeBase64(null);
-    setPixCopyPaste(null);
-  }
-
   return (
-    <Card className="w-full max-w-md shadow-xl mx-auto">
-      {!showPixSection ? (
-        <>
-          <CardHeader className="text-center">
-            <Lock className="h-10 w-10 text-primary mx-auto mb-3" />
-            <CardTitle className="text-2xl font-headline">Finalizar Assinatura</CardTitle>
-            {isPlanFromUrl && formData.itemName && formData.unitPrice >= 0 && (
-              <CardDescription className="text-md pt-2 text-foreground/80">
-                Você está assinando: <span className="font-semibold text-primary">{formData.itemName}</span>
-                <br />
-                Valor: <span className="font-semibold text-primary">R$ {formData.unitPrice.toFixed(2).replace('.', ',')}</span>
-              </CardDescription>
+    <Card className="w-full max-w-lg shadow-xl mx-auto">
+      <CardHeader className="text-center">
+        <Lock className="h-10 w-10 text-primary mx-auto mb-3" />
+        <CardTitle className="text-2xl font-headline">Finalizar Assinatura</CardTitle>
+        {isPlanFromUrl && formData.itemName && formData.unitPrice > 0 && (
+          <CardDescription className="text-md pt-2 text-foreground/80">
+            Você está assinando: <span className="font-semibold text-primary">{formData.itemName}</span>
+            <br />
+            Valor: <span className="font-semibold text-primary">R$ {formData.unitPrice.toFixed(2).replace('.', ',')}</span>
+          </CardDescription>
+        )}
+         {isPlanFromUrl && formData.itemName && formData.unitPrice === 0 && (
+          <CardDescription className="text-md pt-2 text-foreground/80">
+            Você está acessando: <span className="font-semibold text-primary">{formData.itemName}</span> (Gratuito)
+             <br />
+             <span className="text-sm">Preencha seus dados para continuar.</span>
+          </CardDescription>
+        )}
+        {(!isPlanFromUrl || !formData.itemName) && (
+             <CardDescription className="text-md pt-2">
+                Carregando detalhes...
+             </CardDescription>
+        )}
+      </CardHeader>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-6 pt-4">
+          <Separator />
+          <div className="space-y-2 pt-2">
+            <Label htmlFor="payerName" className="font-semibold flex items-center">
+                <User className="mr-2 h-4 w-4 text-primary/80"/> Nome Completo
+            </Label>
+            <Input
+              id="payerName"
+              name="payerName"
+              type="text"
+              value={formData.payerName}
+              onChange={handleInputChange}
+              placeholder="Seu nome completo"
+              required
+              className="text-base h-12"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="payerEmail" className="font-semibold flex items-center">
+                <Mail className="mr-2 h-4 w-4 text-primary/80"/> Seu melhor e-mail
+            </Label>
+            <Input
+              id="payerEmail"
+              name="payerEmail"
+              type="email"
+              value={formData.payerEmail}
+              onChange={handleInputChange}
+              placeholder="seu.email@exemplo.com"
+              required
+              className="text-base h-12"
+            />
+          </div>
+           {/* Botão de pagamento principal */}
+           <Button 
+            type="submit" 
+            className="w-full bg-accent text-accent-foreground hover:bg-accent/90 mt-6" 
+            size="lg" 
+            disabled={isLoading || (!formData.itemName && isPlanFromUrl)}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Processando...
+              </>
+            ) : (
+              pixQrCodeBase64 ? "Gerar Novo PIX / Pagar com Outro Método" : "Pagar com Mercado Pago / Gerar PIX"
             )}
-            {(!isPlanFromUrl || !formData.itemName) && (
-                 <CardDescription className="text-md pt-2">
-                    Carregando detalhes do plano...
-                 </CardDescription>
-            )}
-          </CardHeader>
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-6 pt-4">
-              <Separator />
-              <div className="space-y-2 pt-2">
-                <Label htmlFor="payerEmail" className="font-semibold">Seu melhor e-mail</Label>
-                <Input
-                  id="payerEmail"
-                  name="payerEmail"
-                  type="email"
-                  value={formData.payerEmail}
-                  onChange={handleEmailChange}
-                  placeholder="seu.email@exemplo.com"
-                  required
-                  className="text-base h-12"
-                />
-              </div>
-              <p className="text-xs text-muted-foreground text-center pt-2">
-                Você será direcionado ao ambiente seguro do Mercado Pago para escolher a forma de pagamento (PIX, Cartão, etc.).
-              </p>
-            </CardContent>
-            <CardFooter className="flex-col gap-3 pt-2">
-              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={isLoading || !formData.itemName}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Processando...
-                  </>
-                ) : (
-                  "Pagar com Mercado Pago"
+          </Button>
+          <p className="text-xs text-muted-foreground text-center pt-2">
+            Você poderá pagar com PIX diretamente aqui ou ser direcionado ao ambiente seguro do Mercado Pago para outros métodos.
+          </p>
+        </CardContent>
+      </form>
+
+      {/* Seção PIX - Exibida abaixo do formulário se o PIX foi gerado */}
+      {pixQrCodeBase64 && pixCopyPaste && !isLoading && (
+        <CardContent className="space-y-6 pt-8 border-t mt-6">
+            <div className="text-center">
+                <QrCode className="h-10 w-10 text-primary mx-auto mb-3" />
+                <h3 className="text-xl font-headline text-primary">Pague com PIX</h3>
+                <p className="text-foreground/80 text-sm">Escaneie o QR Code abaixo com o app do seu banco ou copie o código.</p>
+                 {formData.itemName && (
+                    <p className="text-xs text-muted-foreground pt-1">Plano: {formData.itemName} - R$ {formData.unitPrice.toFixed(2).replace('.', ',')}</p>
                 )}
-              </Button>
-              {isPlanFromUrl && (
-                  <Button onClick={() => router.push('/planos')} variant="link" className="text-sm font-normal text-muted-foreground hover:text-primary">
-                      Escolher outro plano
-                  </Button>
-              )}
-            </CardFooter>
-          </form>
-        </>
-      ) : (
-        <>
-          <CardHeader className="text-center">
-            <QrCode className="h-12 w-12 text-primary mx-auto mb-4" />
-            <CardTitle className="text-3xl font-headline">Pague com PIX</CardTitle>
-            <CardDescription className="text-foreground/80">
-              Escaneie o QR Code abaixo com o app do seu banco ou copie o código.
-            </CardDescription>
-            {formData.itemName && (
-                 <p className="text-sm text-muted-foreground pt-1">Plano: {formData.itemName} - R$ {formData.unitPrice.toFixed(2).replace('.', ',')}</p>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {pixQrCodeBase64 && (
-              <div className="flex justify-center p-2 bg-white rounded-md shadow-md max-w-[200px] mx-auto">
-                <Image 
-                  src={pixQrCodeBase64} 
-                  alt="QR Code PIX" 
-                  width={180} 
-                  height={180}
-                  data-ai-hint="pix qrcode"
+            </div>
+            <div className="flex justify-center p-2 bg-white rounded-md shadow-md max-w-[200px] mx-auto">
+            <Image 
+                src={pixQrCodeBase64} 
+                alt="QR Code PIX" 
+                width={180} 
+                height={180}
+                data-ai-hint="pix qrcode"
+            />
+            </div>
+            <div className="space-y-2">
+            <Label htmlFor="pixCopyPasteCode" className="font-semibold">PIX Copia e Cola:</Label>
+            <div className="flex items-center space-x-2">
+                <Input
+                id="pixCopyPasteCode"
+                type="text"
+                value={pixCopyPaste}
+                readOnly
+                className="bg-muted/50 text-sm flex-grow h-11"
                 />
-              </div>
-            )}
-            {pixCopyPaste && (
-              <div className="space-y-2">
-                <Label htmlFor="pixCopyPasteCode" className="font-semibold">PIX Copia e Cola:</Label>
-                <div className="flex items-center space-x-2">
-                  <Input
-                    id="pixCopyPasteCode"
-                    type="text"
-                    value={pixCopyPaste}
-                    readOnly
-                    className="bg-muted/50 text-sm flex-grow h-11"
-                  />
-                  <Button variant="outline" size="icon" onClick={handleCopyToClipboard} title="Copiar Código PIX" className="h-11 w-11">
-                    <Copy className="h-5 w-5" />
-                  </Button>
-                </div>
-              </div>
-            )}
-            <p className="text-xs text-muted-foreground text-center">
-              Após o pagamento, a confirmação pode levar alguns instantes.
-              (A verificação automática de pagamento não está implementada nesta etapa.)
-            </p>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-3">
-             <Button onClick={handleBackToForm} variant="outline" className="w-full">
-              <ArrowLeft className="mr-2 h-4 w-4"/>
-              Alterar E-mail ou Método
-            </Button>
-            {isPlanFromUrl && (
-                <Button onClick={() => router.push('/planos')} variant="link" className="w-full text-sm font-normal text-muted-foreground hover:text-primary">
-                    Ver outros Planos
+                <Button variant="outline" size="icon" onClick={handleCopyToClipboard} title="Copiar Código PIX" className="h-11 w-11">
+                <Copy className="h-5 w-5" />
                 </Button>
-            )}
-          </CardFooter>
-        </>
+            </div>
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+            Após o pagamento, a confirmação pode levar alguns instantes. (Verificação automática não implementada).
+            </p>
+        </CardContent>
       )}
+
+      <CardFooter className="flex-col gap-3 pt-6">
+         {isPlanFromUrl && (
+              <Button onClick={() => router.push('/planos')} variant="link" className="text-sm font-normal text-muted-foreground hover:text-primary">
+                  <ShoppingBag className="mr-2 h-4 w-4"/> Ver outros planos
+              </Button>
+          )}
+      </CardFooter>
     </Card>
   );
 }
@@ -325,5 +333,6 @@ export default function CheckoutMercadoPagoPage() {
     </div>
   );
 }
+
 
     
