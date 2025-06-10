@@ -22,7 +22,7 @@ const plans = [
     ],
     cta: "Começar Agora",
     icon: <Star className="h-10 w-10 text-primary mb-4" />,
-    href: "/quiz" // Ou para uma página de registro/login se tiver
+    href: "/quiz" 
   },
   {
     name: "Peregrino Digital",
