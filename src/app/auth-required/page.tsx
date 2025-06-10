@@ -2,7 +2,7 @@
 "use client";
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { LockKeyhole, LogIn, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -13,13 +13,8 @@ export default function AuthRequiredPage() {
   const searchParams = useSearchParams();
   const next = searchParams.get('next');
 
-  // Este efeito é opcional, mas pode ser útil se você quiser
-  // armazenar a rota de redirecionamento para uso após o login/cadastro.
   useEffect(() => {
     if (next) {
-      // Você poderia armazenar 'next' no localStorage ou em um estado global
-      // para redirecionar o usuário após o login/cadastro bem-sucedido.
-      // Ex: localStorage.setItem('redirectAfterAuth', next);
       console.log("Redirecionar para:", next, "após autenticação.");
     }
   }, [next]);

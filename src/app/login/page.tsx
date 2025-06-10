@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,10 +14,13 @@ import { LogIn, Mail, KeyRound, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const nextUrl = searchParams.get('next');
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -41,8 +44,8 @@ export default function LoginPage() {
         title: "Login Bem-Sucedido!",
         description: "Você será redirecionado em breve.",
       });
-      router.push('/'); // Redireciona para a página inicial após o login
-      router.refresh(); // Força a atualização do estado de autenticação nos componentes
+      router.push(nextUrl || '/'); // Redireciona para a 'nextUrl' ou página inicial
+      router.refresh(); 
     }
   };
 
@@ -102,7 +105,7 @@ export default function LoginPage() {
             </Button>
             <p className="text-sm text-muted-foreground">
               Não tem uma conta?{' '}
-              <Link href="/signup" className="font-semibold text-primary hover:underline">
+              <Link href={`/signup${nextUrl ? `?next=${encodeURIComponent(nextUrl)}` : ''}`} className="font-semibold text-primary hover:underline">
                 Cadastre-se
               </Link>
             </p>
