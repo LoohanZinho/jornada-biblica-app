@@ -10,7 +10,7 @@ import { AlertCircle } from 'lucide-react';
 interface DailyVerseImageProps {
   prompt: string;
   altText: string;
-  imageHint?: string; // For data-ai-hint on placeholder
+  imageHint?: string;
 }
 
 export function DailyVerseImage({ prompt, altText, imageHint }: DailyVerseImageProps) {
@@ -29,8 +29,6 @@ export function DailyVerseImage({ prompt, altText, imageHint }: DailyVerseImageP
 
   useEffect(() => {
     if (!prompt || prompt === currentPromptRef.current) {
-      // Avoid refetching if prompt hasn't changed or is empty
-      // If prompt is empty and we are not loading, set error or do nothing
       if (!prompt && !isLoading) {
         setError(true);
         setIsLoading(false);
@@ -60,7 +58,7 @@ export function DailyVerseImage({ prompt, altText, imageHint }: DailyVerseImageP
           setIsLoading(false);
         }
       });
-  }, [prompt, isLoading]); // Added isLoading to dependency array to handle retries or subsequent calls correctly
+  }, [prompt]); // Dependência apenas no prompt para iniciar a busca
 
   return (
     <div className="aspect-video w-full relative overflow-hidden rounded-lg shadow-md bg-muted">
@@ -69,32 +67,31 @@ export function DailyVerseImage({ prompt, altText, imageHint }: DailyVerseImageP
         <div className="w-full h-full flex flex-col items-center justify-center bg-secondary">
           <AlertCircle className="w-16 h-16 text-destructive mb-2" />
           <p className="text-sm text-destructive-foreground px-4 text-center">Não foi possível carregar a ilustração para este versículo.</p>
-          <Image 
-            src={`https://placehold.co/600x400.png`} 
-            alt="Erro ao carregar ilustração" 
-            layout="fill" 
-            objectFit="cover" 
+          <Image
+            src={`https://placehold.co/600x400.png`}
+            alt="Erro ao carregar ilustração"
+            layout="fill"
+            objectFit="cover"
             data-ai-hint={imageHint || "sacred scroll"}
             className="opacity-20"
           />
         </div>
       )}
       {!isLoading && !error && imageUrl && (
-        <Image 
-          src={imageUrl} 
-          alt={altText} 
-          layout="fill" 
-          objectFit="cover" 
+        <Image
+          src={imageUrl}
+          alt={altText}
+          layout="fill"
+          objectFit="cover"
           data-ai-hint={imageHint || "spiritual illustration"}
         />
       )}
-      {/* Fallback for when no prompt is given initially, or if all else fails before first load */}
       {!isLoading && !error && !imageUrl && !prompt && (
-         <Image 
-            src={`https://placehold.co/600x400.png`} 
-            alt="Ilustração para o versículo" 
-            layout="fill" 
-            objectFit="cover" 
+         <Image
+            src={`https://placehold.co/600x400.png`}
+            alt="Ilustração para o versículo"
+            layout="fill"
+            objectFit="cover"
             data-ai-hint={imageHint || "bible verse"}
           />
       )}

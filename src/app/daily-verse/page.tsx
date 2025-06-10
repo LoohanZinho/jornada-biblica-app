@@ -8,6 +8,9 @@ import { DailyVerseImage } from '@/components/daily-verse/DailyVerseImage';
 export default function DailyVersePage() {
   const verse: DailyVerseType = getRandomVerse();
   const imagePrompt = verse.theme || verse.text.substring(0, 100) + (verse.text.length > 100 ? "..." : "");
+  // Prioriza o tema para o hint, senão a primeira palavra da referência, senão um genérico.
+  const imageHintForPlaceholder = verse.theme?.toLowerCase().split(' ')[0] || verse.reference.split(' ')[0].toLowerCase() || "scripture";
+
 
   return (
     <div className="flex flex-col items-center justify-center py-8 md:py-12 animate-fade-in">
@@ -20,10 +23,10 @@ export default function DailyVersePage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center space-y-6">
-          <DailyVerseImage 
-            prompt={imagePrompt} 
-            altText={`Ilustração para o versículo: ${verse.reference}`} 
-            imageHint={verse.theme || verse.reference.split(' ')[0].toLowerCase()} // e.g., "genesis" or "love"
+          <DailyVerseImage
+            prompt={imagePrompt}
+            altText={`Ilustração para o versículo: ${verse.reference}`}
+            imageHint={imageHintForPlaceholder}
           />
           <blockquote className="text-xl md:text-2xl leading-relaxed text-foreground mb-4 italic px-4 py-6 bg-secondary/50 rounded-md border-l-4 border-primary">
             &ldquo;{verse.text}&rdquo;
