@@ -26,7 +26,7 @@ export async function generateImageFromQuestion(input: GenerateImageFromQuestion
 }
 
 const imageGenerationPromptForModel = (questionText: string) => {
-  const maxLength = 300; // Reduzido um pouco para dar mais espaço ao estilo
+  const maxLength = 300; 
   let effectiveQuestionText = questionText;
   if (questionText.length > maxLength ) {
     effectiveQuestionText = questionText.substring(0, maxLength - 3) + "...";
