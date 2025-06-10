@@ -33,6 +33,7 @@ export default function ProfilePage() {
   const handleSignOut = async () => {
     await signOut();
     router.push('/'); 
+    router.refresh(); // Adicionado para garantir atualização da UI em outros componentes
   };
 
   return (

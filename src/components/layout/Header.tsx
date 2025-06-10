@@ -35,22 +35,36 @@ export function Header() {
   const handleSignOut = async () => {
     await signOut();
     router.push('/');
-    router.refresh(); // Força uma atualização para garantir que o estado do header mude
+    router.refresh(); 
   };
 
   const getInitials = (email?: string | null, name?: string | null) => {
     if (name) {
-      const parts = name.split(' ');
+      const parts = name.trim().split(' ').filter(part => part.length > 0);
       if (parts.length > 1 && parts[0] && parts[parts.length - 1]) {
         return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
       }
       if (parts[0] && parts[0].length >=2) return parts[0].substring(0, 2).toUpperCase();
       if (parts[0]) return parts[0][0].toUpperCase();
     }
+    if (email && email.includes('@')) {
+      const firstLetter = email[0];
+      const partBeforeAt = email.split('@')[0];
+      if (partBeforeAt.length > 1 && partBeforeAt.includes('.')) {
+        const nameParts = partBeforeAt.split('.');
+        if (nameParts[0] && nameParts[1]) {
+           return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
+        }
+      }
+      if (partBeforeAt.length > 1 && !partBeforeAt.includes('.')){
+         return email.substring(0, 2).toUpperCase();
+      }
+      return firstLetter.toUpperCase();
+    }
     if (email && email.length >= 2) {
       return email.substring(0, 2).toUpperCase();
     }
-    return 'JB'; // Jornada Bíblica fallback
+    return 'JB'; 
   };
   
   const currentNavItems = [...baseNavItems];
@@ -85,7 +99,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
                   <Avatar className="h-9 w-9">
-                    {/* <AvatarImage src={user.user_metadata?.avatar_url || undefined} alt={user.user_metadata?.full_name || user.email || 'User Avatar'} /> */}
+                    <AvatarImage src={user.user_metadata?.avatar_url || undefined} alt={user.user_metadata?.full_name || user.email || 'User Avatar'} />
                     <AvatarFallback>{getInitials(user.email, user.user_metadata?.full_name)}</AvatarFallback>
                   </Avatar>
                 </Button>
@@ -93,10 +107,10 @@ export function Header() {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
+                    <p className="text-sm font-medium leading-none truncate">
                       {user.user_metadata?.full_name || 'Usuário'}
                     </p>
-                    <p className="text-xs leading-none text-muted-foreground">
+                    <p className="text-xs leading-none text-muted-foreground truncate">
                       {user.email}
                     </p>
                   </div>
