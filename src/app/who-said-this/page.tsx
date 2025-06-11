@@ -15,14 +15,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import React, { useState, useCallback, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useUser } from '@/hooks/useUser';
+import { canUseFeature, recordFeatureUsage, getFeatureLimitConfig, USER_PLANS_CONFIG } from '@/lib/usageLimits';
 
 interface CurrentQuoteResolutionData {
   quote: string;
-  selectedCharacter: string; 
-  correctCharacter: string; 
+  selectedCharacter: string;
+  correctCharacter: string;
   referenceForExplanation: string;
   contextForExplanation: string;
-  isCorrect: boolean; 
+  isCorrect: boolean;
 }
 
 export default function WhoSaidThisPage() {
@@ -32,23 +33,54 @@ export default function WhoSaidThisPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [gameResults, setGameResults] = useState<WhoSaidThisResultType[]>([]);
-  
+
   const [showQuoteResolutionCard, setShowQuoteResolutionCard] = useState(false);
   const [currentQuoteResolutionData, setCurrentQuoteResolutionData] = useState<CurrentQuoteResolutionData | null>(null);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
-  
-  const { user, isLoading } = useUser();
+
+  const { user, isLoading: isLoadingUser } = useUser();
 
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login');
+    if (!isLoadingUser && !user) {
+      router.push('/login?next=/who-said-this');
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoadingUser, router]);
 
   const handleStartGame = useCallback(async (selectedSettings: QuizSettings) => {
+    if (!user) {
+      toast({
+        title: "Acesso Negado",
+        description: "Você precisa estar logado para jogar 'Quem Disse Isso?'.",
+        variant: "destructive",
+      });
+      router.push('/login?next=/who-said-this');
+      return;
+    }
+
+    const userPlan = user.app_metadata.plan || 'free';
+    const limitConfig = getFeatureLimitConfig(userPlan, 'whoSaidThis');
+
+    if (limitConfig) {
+      if (!canUseFeature(user.id, 'whoSaidThis', limitConfig.limit, limitConfig.period)) {
+        toast({
+          title: "Limite Diário Atingido",
+          description: `Você atingiu o limite de ${limitConfig.limit} desafios de 'Quem Disse Isso?' por dia para o plano ${USER_PLANS_CONFIG[userPlan]?.name || userPlan}. Considere fazer um upgrade!`,
+          variant: "destructive",
+          duration: 7000,
+          action: (
+            <Button onClick={() => router.push('/planos')} size="sm">
+              Ver Planos
+            </Button>
+          ),
+        });
+        return;
+      }
+    }
+
+
     setIsLoadingQuestions(true);
     setSettings(selectedSettings);
     setCurrentQuestionIndex(0);
@@ -65,7 +97,7 @@ export default function WhoSaidThisPage() {
         numberOfQuestions: selectedSettings.numberOfQuestions,
       };
       const response = await generateWhoSaidThisQuestions(aiInput);
-      
+
       let generatedQuestions = response.questions as WhoSaidThisQuestionType[];
 
       if (!generatedQuestions || generatedQuestions.length === 0) {
@@ -74,26 +106,26 @@ export default function WhoSaidThisPage() {
             description: "A IA não conseguiu gerar perguntas para 'Quem Disse Isso?'. Usando perguntas de exemplo.",
             variant: "destructive",
         });
-        generatedQuestions = sampleWhoSaidThisQuestions.filter(q => 
+        generatedQuestions = sampleWhoSaidThisQuestions.filter(q =>
             (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic || aiInput.topic === "Bíblia em geral") &&
             (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty)
         ).slice(0, selectedSettings.numberOfQuestions);
       }
-      
-      let finalQuestions = generatedQuestions.filter(q => q.quote && q.options && q.correctCharacter && q.referenceForExplanation && q.contextForExplanation); 
+
+      let finalQuestions = generatedQuestions.filter(q => q.quote && q.options && q.correctCharacter && q.referenceForExplanation && q.contextForExplanation);
 
       if (finalQuestions.length < selectedSettings.numberOfQuestions) {
         const needed = selectedSettings.numberOfQuestions - finalQuestions.length;
         if (needed > 0) {
-            const fallbackSample = sampleWhoSaidThisQuestions.filter(q => 
+            const fallbackSample = sampleWhoSaidThisQuestions.filter(q =>
                 (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic || aiInput.topic === "Bíblia em geral") &&
                 (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty) &&
-                !finalQuestions.some(fq => fq.id === q.id) 
+                !finalQuestions.some(fq => fq.id === q.id)
             ).slice(0, needed);
             finalQuestions = [...finalQuestions, ...fallbackSample];
         }
       }
-      
+
       finalQuestions = finalQuestions.slice(0, selectedSettings.numberOfQuestions);
 
       if (finalQuestions.length === 0) {
@@ -103,26 +135,28 @@ export default function WhoSaidThisPage() {
             variant: "destructive",
         });
         setIsLoadingQuestions(false);
-        setGameStarted(false); 
+        setGameStarted(false);
         return;
       }
-      
+
       setQuestions(finalQuestions);
       setGameStarted(true);
+      if (limitConfig && user) {
+        recordFeatureUsage(user.id, 'whoSaidThis', limitConfig.period);
+      }
 
     } catch (error) {
-      // console.error("Erro ao gerar perguntas 'Quem Disse Isso?':", error); // Mantido para erros de IA
       toast({
         title: "Erro ao Gerar Perguntas",
         description: `Houve um problema com a IA: ${(error as Error).message}. Usando perguntas de exemplo.`,
         variant: "destructive",
       });
-      
-      let fallbackQuestions = sampleWhoSaidThisQuestions.filter(q => 
+
+      let fallbackQuestions = sampleWhoSaidThisQuestions.filter(q =>
           (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic || (selectedSettings.topic === "Todos os Tópicos" && "Bíblia em geral")) &&
           (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty)
       ).slice(0, selectedSettings.numberOfQuestions);
-        
+
       if (fallbackQuestions.length === 0) {
            toast({
               title: "Nenhuma Pergunta de Exemplo",
@@ -130,15 +164,18 @@ export default function WhoSaidThisPage() {
               variant: "destructive",
           });
           setIsLoadingQuestions(false);
-          setGameStarted(false); 
+          setGameStarted(false);
           return;
       }
       setQuestions(fallbackQuestions);
       setGameStarted(true);
+      if (limitConfig && user) { // Registrar uso mesmo com fallback
+        recordFeatureUsage(user.id, 'whoSaidThis', limitConfig.period);
+      }
     } finally {
       setIsLoadingQuestions(false);
     }
-  }, [toast]);
+  }, [toast, user, router]);
 
   const handleAnswer = (selectedChar: string, isSelectionCorrect: boolean) => {
     if (isSelectionCorrect) {
@@ -155,7 +192,7 @@ export default function WhoSaidThisPage() {
       reference: currentQuestion.referenceForExplanation,
     };
     setGameResults(prev => [...prev, resultEntry]);
-    
+
     const resolutionData: CurrentQuoteResolutionData = {
       quote: currentQuestion.quote,
       selectedCharacter: selectedChar,
@@ -165,7 +202,7 @@ export default function WhoSaidThisPage() {
       isCorrect: isSelectionCorrect,
     };
     setCurrentQuoteResolutionData(resolutionData);
-    setShowQuoteResolutionCard(true); 
+    setShowQuoteResolutionCard(true);
   };
 
   const handleNextAfterResolution = () => {
@@ -178,7 +215,7 @@ export default function WhoSaidThisPage() {
       router.push(`/who-said-this/results`);
     }
   };
-  
+
   const resetGame = () => {
     setGameStarted(false);
     setSettings(null);
@@ -190,6 +227,14 @@ export default function WhoSaidThisPage() {
     setShowQuoteResolutionCard(false);
     setCurrentQuoteResolutionData(null);
   };
+
+   if (isLoadingUser) {
+    return (
+     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
+       <LoadingIndicator text="Carregando dados do usuário..." size={48} />
+     </div>
+   );
+ }
 
   if (isLoadingQuestions) {
     return (
@@ -212,7 +257,7 @@ export default function WhoSaidThisPage() {
       </div>
     );
   }
-  
+
   const currentQuestionData = questions[currentQuestionIndex];
   const progressPercentage = questions.length > 0 ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0;
 
@@ -227,7 +272,7 @@ export default function WhoSaidThisPage() {
         </Button>
       </div>
       <Progress value={progressPercentage} className="w-full h-3" />
-      
+
       {currentQuestionData && !showQuoteResolutionCard && (
         <WhoSaidThisQuestionDisplay
           questionData={currentQuestionData}
@@ -240,8 +285,8 @@ export default function WhoSaidThisPage() {
       {showQuoteResolutionCard && currentQuoteResolutionData && (
         <Card className="w-full shadow-lg animate-fade-in">
           <CardHeader className="text-center">
-             {currentQuoteResolutionData.isCorrect ? 
-                <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-3" /> : 
+             {currentQuoteResolutionData.isCorrect ?
+                <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-3" /> :
                 <XCircle className="h-12 w-12 text-red-500 mx-auto mb-3" />
              }
             <CardTitle className="text-2xl font-headline">
@@ -285,3 +330,5 @@ export default function WhoSaidThisPage() {
     </div>
   );
 }
+
+    

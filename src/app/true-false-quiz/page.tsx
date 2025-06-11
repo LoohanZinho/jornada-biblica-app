@@ -1,23 +1,23 @@
 
 "use client";
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 import type { TrueFalseQuestionType, QuizSettings, TrueFalseResultType } from '@/types';
 import { generateTrueFalseQuestions, type GenerateTrueFalseQuestionsInput } from '@/ai/flows/generate-true-false-questions';
-import { sampleTrueFalseQuestions } from '@/lib/trueFalseQuizData'; 
+import { sampleTrueFalseQuestions } from '@/lib/trueFalseQuizData';
 import { TrueFalseQuizSetup } from '@/components/game/TrueFalseQuizSetup';
 import { TrueFalseQuizQuestionDisplay } from '@/components/game/TrueFalseQuizQuestionDisplay';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, RotateCcw, CheckSquare, XSquare, Lightbulb, CheckCircle2, XCircle } from 'lucide-react'; // Added CheckCircle2, XCircle
+import { ArrowRight, RotateCcw, CheckSquare, XSquare, Lightbulb, CheckCircle2, XCircle } from 'lucide-react';
 import { LoadingIndicator } from '@/components/common/LoadingIndicator';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
 import { useUser } from '@/hooks/useUser';
+import { canUseFeature, recordFeatureUsage, getFeatureLimitConfig, USER_PLANS_CONFIG } from '@/lib/usageLimits';
+
 interface CurrentResolutionData {
   statement: string;
   selectedAnswer: boolean;
@@ -33,16 +33,52 @@ export default function TrueFalseQuizPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [gameResults, setGameResults] = useState<TrueFalseResultType[]>([]);
-  
+
   const [showResolutionCard, setShowResolutionCard] = useState(false);
   const [currentResolutionData, setCurrentResolutionData] = useState<CurrentResolutionData | null>(null);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
 
   const router = useRouter();
-  const { user, isLoading } = useUser();
+  const { user, isLoading: isLoadingUser } = useUser();
   const { toast } = useToast();
 
+  useEffect(() => {
+    if (!isLoadingUser && !user) {
+      router.push('/login?next=/true-false-quiz');
+    }
+  }, [user, isLoadingUser, router]);
+
   const handleStartGame = useCallback(async (selectedSettings: QuizSettings) => {
+     if (!user) {
+      toast({
+        title: "Acesso Negado",
+        description: "Você precisa estar logado para jogar 'Verdadeiro ou Falso?'.",
+        variant: "destructive",
+      });
+      router.push('/login?next=/true-false-quiz');
+      return;
+    }
+
+    const userPlan = user.app_metadata.plan || 'free';
+    const limitConfig = getFeatureLimitConfig(userPlan, 'trueFalse');
+
+    if (limitConfig) {
+      if (!canUseFeature(user.id, 'trueFalse', limitConfig.limit, limitConfig.period)) {
+        toast({
+          title: "Limite Diário Atingido",
+          description: `Você atingiu o limite de ${limitConfig.limit} desafios de 'Verdadeiro ou Falso?' por dia para o plano ${USER_PLANS_CONFIG[userPlan]?.name || userPlan}. Considere fazer um upgrade!`,
+          variant: "destructive",
+          duration: 7000,
+          action: (
+            <Button onClick={() => router.push('/planos')} size="sm">
+              Ver Planos
+            </Button>
+          ),
+        });
+        return;
+      }
+    }
+
     setIsLoadingQuestions(true);
     setSettings(selectedSettings);
     setCurrentQuestionIndex(0);
@@ -59,7 +95,7 @@ export default function TrueFalseQuizPage() {
         numberOfQuestions: selectedSettings.numberOfQuestions,
       };
       const response = await generateTrueFalseQuestions(aiInput);
-      
+
       let generatedQuestions = response.questions;
 
       if (!generatedQuestions || generatedQuestions.length === 0) {
@@ -68,26 +104,26 @@ export default function TrueFalseQuizPage() {
             description: "A IA não conseguiu gerar afirmações para 'Verdadeiro ou Falso'. Usando exemplos.",
             variant: "destructive",
         });
-        generatedQuestions = sampleTrueFalseQuestions.filter(q => 
+        generatedQuestions = sampleTrueFalseQuestions.filter(q =>
             (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic || aiInput.topic === "Bíblia em geral") &&
             (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty)
         ).slice(0, selectedSettings.numberOfQuestions);
       }
-      
-      let finalQuestions = generatedQuestions.filter(q => q.statement && typeof q.correctAnswer === 'boolean' && q.explanation); 
+
+      let finalQuestions = generatedQuestions.filter(q => q.statement && typeof q.correctAnswer === 'boolean' && q.explanation);
 
       if (finalQuestions.length < selectedSettings.numberOfQuestions && sampleTrueFalseQuestions.length > 0) {
         const needed = selectedSettings.numberOfQuestions - finalQuestions.length;
         if (needed > 0) {
-            const fallbackSample = sampleTrueFalseQuestions.filter(q => 
+            const fallbackSample = sampleTrueFalseQuestions.filter(q =>
                 (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic || aiInput.topic === "Bíblia em geral") &&
                 (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty) &&
-                !finalQuestions.some(fq => fq.id === q.id) 
+                !finalQuestions.some(fq => fq.id === q.id)
             ).slice(0, needed);
             finalQuestions = [...finalQuestions, ...fallbackSample];
         }
       }
-      
+
       finalQuestions = finalQuestions.slice(0, selectedSettings.numberOfQuestions);
 
       if (finalQuestions.length === 0) {
@@ -97,12 +133,15 @@ export default function TrueFalseQuizPage() {
             variant: "destructive",
         });
         setIsLoadingQuestions(false);
-        setGameStarted(false); 
+        setGameStarted(false);
         return;
       }
-      
+
       setQuestions(finalQuestions);
       setGameStarted(true);
+      if (limitConfig && user) {
+        recordFeatureUsage(user.id, 'trueFalse', limitConfig.period);
+      }
 
     } catch (error) {
       toast({
@@ -110,12 +149,12 @@ export default function TrueFalseQuizPage() {
         description: `Houve um problema com a IA: ${(error as Error).message}. Usando exemplos.`,
         variant: "destructive",
       });
-      
-      let fallbackQuestions = sampleTrueFalseQuestions.filter(q => 
+
+      let fallbackQuestions = sampleTrueFalseQuestions.filter(q =>
           (selectedSettings.topic === "Todos os Tópicos" || q.topic === selectedSettings.topic || (selectedSettings.topic === "Todos os Tópicos" && "Bíblia em geral")) &&
           (selectedSettings.difficulty === "todos" || q.difficulty === selectedSettings.difficulty)
       ).slice(0, selectedSettings.numberOfQuestions);
-        
+
       if (fallbackQuestions.length === 0 && sampleTrueFalseQuestions.length > 0) {
            toast({
               title: "Nenhuma Afirmação de Exemplo",
@@ -123,15 +162,18 @@ export default function TrueFalseQuizPage() {
               variant: "destructive",
           });
           setIsLoadingQuestions(false);
-          setGameStarted(false); 
+          setGameStarted(false);
           return;
       }
       setQuestions(fallbackQuestions);
       setGameStarted(true);
+       if (limitConfig && user) { // Registrar uso mesmo com fallback
+        recordFeatureUsage(user.id, 'trueFalse', limitConfig.period);
+      }
     } finally {
       setIsLoadingQuestions(false);
     }
-  }, [toast]);
+  }, [toast, user, router]);
 
   const handleAnswer = (userSelectedAnswer: boolean, isSelectionCorrect: boolean) => {
     if (isSelectionCorrect) {
@@ -148,7 +190,7 @@ export default function TrueFalseQuizPage() {
       explanation: currentQuestion.explanation,
     };
     setGameResults(prev => [...prev, resultEntry]);
-    
+
     const resolutionData: CurrentResolutionData = {
       statement: currentQuestion.statement,
       selectedAnswer: userSelectedAnswer,
@@ -157,7 +199,7 @@ export default function TrueFalseQuizPage() {
       isCorrect: isSelectionCorrect,
     };
     setCurrentResolutionData(resolutionData);
-    setShowResolutionCard(true); 
+    setShowResolutionCard(true);
   };
 
   const handleNextAfterResolution = () => {
@@ -170,7 +212,7 @@ export default function TrueFalseQuizPage() {
       router.push(`/true-false-quiz/results`);
     }
   };
-  
+
   const resetGame = () => {
     setGameStarted(false);
     setSettings(null);
@@ -183,11 +225,13 @@ export default function TrueFalseQuizPage() {
     setCurrentResolutionData(null);
   };
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, isLoading, router]);
+  if (isLoadingUser) {
+    return (
+     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
+       <LoadingIndicator text="Carregando dados do usuário..." size={48} />
+     </div>
+   );
+ }
 
 
   if (isLoadingQuestions) {
@@ -211,7 +255,7 @@ export default function TrueFalseQuizPage() {
       </div>
     );
   }
-  
+
   const currentQuestionData = questions[currentQuestionIndex];
   const progressPercentage = questions.length > 0 ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0;
 
@@ -226,7 +270,7 @@ export default function TrueFalseQuizPage() {
         </Button>
       </div>
       <Progress value={progressPercentage} className="w-full h-3" />
-      
+
       {currentQuestionData && !showResolutionCard && (
         <TrueFalseQuizQuestionDisplay
           questionData={currentQuestionData}
@@ -239,8 +283,8 @@ export default function TrueFalseQuizPage() {
       {showResolutionCard && currentResolutionData && (
         <Card className="w-full shadow-lg animate-fade-in">
           <CardHeader className="text-center">
-             {currentResolutionData.isCorrect ? 
-                <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-3" /> : 
+             {currentResolutionData.isCorrect ?
+                <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-3" /> :
                 <XCircle className="h-12 w-12 text-red-500 mx-auto mb-3" />
              }
             <CardTitle className="text-2xl font-headline">
@@ -283,3 +327,5 @@ export default function TrueFalseQuizPage() {
     </div>
   );
 }
+
+    
