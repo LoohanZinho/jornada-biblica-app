@@ -3,7 +3,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { GuessTheTextQuestionType, QuizSettings, GuessTheTextResult, User } from '@/types';
+import type { GuessTheTextQuestionType, QuizSettings, GuessTheTextResult } from '@/types';
 import { generateGuessTheTextQuestions, type GenerateGuessTheTextQuestionsInput } from '@/ai/flows/generate-guess-the-text-questions';
 import { sampleGuessTheTextQuestions } from '@/lib/guessTheTextData'; // For fallback
 import { GuessTheTextSetup } from '@/components/game/GuessTheTextSetup';
@@ -17,6 +17,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import Link from 'next/link';
 import { BookOpenCheck, CheckCircle2, Home, XCircle } from 'lucide-react';
 import { useUser } from '@/hooks/useUser';
+import { canUseFeature, recordFeatureUsage, getFeatureLimitConfig, USER_PLANS_CONFIG } from '@/lib/usageLimits';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function GuessTheTextPage() {
@@ -31,17 +32,46 @@ export default function GuessTheTextPage() {
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
 
   const router = useRouter();
-  const { user, isLoading } = useUser();
+  const { user, isLoading: isLoadingUser } = useUser();
   const { toast } = useToast();
 
-  // Redirect if user is not logged in and loading is complete
   useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login');
+    if (!isLoadingUser && !user) {
+      router.push('/login?next=/guess-the-text');
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoadingUser, router]);
   
   const handleStartGame = useCallback(async (selectedSettings: QuizSettings) => {
+    if (!user) {
+      toast({
+        title: "Acesso Negado",
+        description: "Você precisa estar logado para jogar 'Qual é o Texto?'.",
+        variant: "destructive",
+      });
+      router.push('/login?next=/guess-the-text');
+      return;
+    }
+
+    const userPlan = user.app_metadata.plan || 'free';
+    const limitConfig = getFeatureLimitConfig(userPlan, 'guessTheText');
+
+    if (limitConfig) {
+      if (!canUseFeature(user.id, 'guessTheText', limitConfig.limit, limitConfig.period)) {
+        toast({
+          title: "Limite Diário Atingido",
+          description: `Você atingiu o limite de ${limitConfig.limit} partidas de 'Qual é o Texto?' por dia para o plano ${USER_PLANS_CONFIG[userPlan]?.name || userPlan}. Considere fazer um upgrade!`,
+          variant: "destructive",
+          duration: 7000,
+          action: (
+            <Button onClick={() => router.push('/planos')} size="sm">
+              Ver Planos
+            </Button>
+          ),
+        });
+        return;
+      }
+    }
+
     setIsLoadingQuestions(true);
     setSettings(selectedSettings);
     setCurrentQuestionIndex(0);
@@ -100,6 +130,9 @@ export default function GuessTheTextPage() {
       
       setQuestions(finalQuestions);
       setGameStarted(true);
+      if (limitConfig && user) {
+        recordFeatureUsage(user.id, 'guessTheText', limitConfig.period);
+      }
 
     } catch (error) {
       console.error("Erro ao gerar perguntas 'Qual é o Texto?':", error);
@@ -126,10 +159,13 @@ export default function GuessTheTextPage() {
       }
       setQuestions(fallbackQuestions);
       setGameStarted(true);
+      if (limitConfig && user) {
+        recordFeatureUsage(user.id, 'guessTheText', limitConfig.period);
+      }
     } finally {
       setIsLoadingQuestions(false);
     }
-  }, [toast]);
+  }, [toast, user, router]);
 
   const handleAnswer = (selectedAnswer: string, isCorrect: boolean) => {
     if (isCorrect) {
@@ -168,6 +204,14 @@ export default function GuessTheTextPage() {
     setGameResults([]);
     setIsLoadingQuestions(false);
   };
+
+  if (isLoadingUser) {
+    return (
+     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
+       <LoadingIndicator text="Carregando dados do usuário..." size={48} />
+     </div>
+   );
+ }
 
   if (isLoadingQuestions) {
     return (
